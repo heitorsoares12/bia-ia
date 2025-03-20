@@ -1,0 +1,46 @@
+.main {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: white;
+}
+
+.title {
+  font-size: 2em;
+  margin-bottom: 30px;
+  font-weight: 600;
+}
+
+.container {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  width: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+}
+
+.chatButton {
+  color: white;
+  display: flex;
+  font-size: 1.2em;
+  border-radius: 32px;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background-color: #000;
+  cursor: pointer;
+  width: 200px;
+  height: 60px;
+  padding: 20px;
+  transition: background-color 0.3s ease;
+  font-weight: 500;
+}
+
+.chatButton:hover {
+  background-color: #333;
+}
