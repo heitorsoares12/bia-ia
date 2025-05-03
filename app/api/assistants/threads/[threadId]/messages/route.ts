@@ -1,51 +1,46 @@
-export const runtime = "nodejs";
+export const runtime = "edge"; // Mudando para Edge Runtime para melhor performance
 
-// Conteúdo de assistant-config.ts
-const assistantId = "asst_LTs4N9cLNBS66TDDMV7ojIza";
-
-// Conteúdo de openai.ts
-import OpenAI from "openai";
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
-
-// Send a new message to a thread
 import { NextRequest } from 'next/server';
+import { openai } from '../../../../openai';
+import { assistantId } from '../../../../assistant.config';
 
 export async function POST(request: NextRequest, { params }: { params: { threadId: string } }) {
-    // Restante do código...
-
     try {
         const { content } = await request.json();
         
-        // Verificar se temos ID do assistente
-        if (!assistantId) {
+        // Validações rápidas
+        if (!assistantId || !params.threadId || !content) {
             return Response.json(
-                { error: "ID do assistente não configurado" },
+                { error: "Parâmetros inválidos" },
                 { status: 400 }
             );
         }
-        
-        // Verificar se temos thread ID
-        if (!params.threadId) {
-            return Response.json(
-                { error: "ID do thread não fornecido" },
-                { status: 400 }
-            );
-        }
-        
-        // Criar mensagem no thread
-        await openai.beta.threads.messages.create(params.threadId, {
+
+        // Criar mensagem no thread com um timeout
+        const messagePromise = openai.beta.threads.messages.create(params.threadId, {
             role: "user",
             content: content,
         });
+
+        // Usar Promise.race para implementar um timeout manual
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Timeout ao enviar mensagem')), 10000);
+        });
+
+        await Promise.race([messagePromise, timeoutPromise]);
         
         // Iniciar execução do assistente
-        const stream = openai.beta.threads.runs.stream(params.threadId, {
+        const stream = await openai.beta.threads.runs.createAndStream(params.threadId, {
             assistant_id: assistantId,
         });
-        
-        return new Response(stream.toReadableStream());
+
+        return new Response(stream.toReadableStream(), {
+            headers: {
+                'Content-Type': 'text/event-stream',
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive',
+            },
+        });
     } catch (error) {
         console.error("Erro ao processar mensagem:", error);
         const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
