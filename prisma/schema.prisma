@@ -1,0 +1,24 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Visitor {
+  id           Int      @id @default(autoincrement())
+  nome         String
+  email        String   @unique
+  telefone     String
+  cnpj         String
+  consentimento Boolean
+  createdAt    DateTime @default(now())
+  messages     Message[]
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  content    String
+  sender     String   // "user" ou "bot"
+  timestamp  DateTime @default(now())
+  visitorId  Int
+  visitor    Visitor  @relation(fields: [visitorId], references: [id])
+}
