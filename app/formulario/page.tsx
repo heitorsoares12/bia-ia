@@ -1,7 +1,9 @@
+"use client";
+
 import { useState } from 'react';
 import Form from '../components/Form';
 
-export default function Home() {
+export default function FormPage() {
   const [visitorId, setVisitorId] = useState<number | null>(null);
 
   return (
@@ -10,7 +12,6 @@ export default function Home() {
         <Form onSuccess={(id) => setVisitorId(id)} />
       ) : (
         <div>
-          {/* Componente de Chat aqui (será implementado posteriormente) */}
           <p>Chat liberado para o visitante ID: {visitorId}</p>
         </div>
       )}
