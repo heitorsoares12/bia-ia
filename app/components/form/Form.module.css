@@ -1,0 +1,223 @@
+.formContainer {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.formTitle {
+  font-size: 1.8rem;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.formSubtitle {
+  color: #718096;
+  margin-bottom: 2rem;
+}
+
+.formGrid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.inputLabel {
+  font-weight: 500;
+  color: #4a5568;
+  font-size: 0.9rem;
+}
+
+.input, .select {
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+}
+
+.input:focus, .select:focus {
+  outline: none;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+.input:hover, .select:hover {
+  border-color: #cbd5e0;
+}
+
+.inputError {
+  border-color: #fc8181;
+}
+
+.inputError:focus {
+  box-shadow: 0 0 0 3px rgba(252, 129, 129, 0.1);
+}
+
+.checkbox {
+  width: 1.2rem;
+  height: 1.2rem;
+  margin-right: 0.5rem;
+}
+
+.errorMessage {
+  color: #e53e3e;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.submitButton {
+  width: 100%;
+  padding: 1rem;
+  margin-top: 1.5rem;
+  background: #4299e1;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  ttransition: all 0.3s ease;
+  font-size: 1.1rem;
+}
+
+.submitButton:hover {
+  background: #3182ce;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.submitButton:active {
+  transform: translateY(0);
+}
+
+.submitButton:disabled {
+  background-color: #cbd5e0;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.submitButton:disabled:hover {
+  background-color: #cbd5e0;
+}
+
+.submitButton:disabled:active {
+  transform: none;
+}
+
+.submitButton:disabled:after {
+  animation: pulse 1.5s infinite;
+}
+
+.privacyLink {
+  color: #4299e1;
+  text-decoration: none;
+  position: relative;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.privacyLink:hover {
+  color: #3182ce;
+  text-decoration: underline;
+}
+
+.toast {
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-width: 350px;
+  display: flex;
+  align-items: center;
+}
+
+.toast-success {
+  background-color: #48bb78;
+  color: white;
+}
+
+.toast-error {
+  background-color: #f56565;
+  color: white;
+}
+
+.toast-icon {
+  margin-right: 10px;
+  font-size: 1.2rem;
+}
+
+.lgpdContainer {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #eaeaea;
+  transition: all 0.3s ease;
+}
+
+.lgpdContainer:hover {
+  background-color: #f0f2f5;
+  border-color: #d0d7de;
+}
+
+.checkboxGroup {
+  display: flex;
+  align-items: flex-start;
+}
+
+.lgpdLabel {
+  font-weight: 500;
+  color: #4a5568;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  text-align: left;
+  margin-left: 0.5rem;
+}
+
+.privacyLink {
+  color: #4299e1;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  display: inline;
+}
+
+.privacyLink:hover {
+  color: #3182ce;
+  text-decoration: none;
+}
+
+.modal {
+  z-index: 10000;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+@media (max-width: 640px) {
+  .formContainer {
+    margin: 1rem;
+    padding: 1.5rem;
+  }
+  
+  .formTitle {
+    font-size: 1.5rem;
+  }
+}

@@ -29,18 +29,23 @@
   display: flex;
   font-size: 1.2em;
   border-radius: 32px;
+  border-color: # 3182ce;
   justify-content: center;
   align-items: center;
   text-align: center;
-  background-color: #000;
+  background-color: #4299e1;
   cursor: pointer;
   width: 200px;
   height: 60px;
   padding: 20px;
-  transition: background-color 0.3s ease;
+  transition: transform 0.1s ease, background 0.2s ease;
   font-weight: 500;
 }
 
 .chatButton:hover {
-  background-color: #333;
+  background: #3182ce;
+}
+
+.chatButton:active {
+  transform: scale(0.98);
 }
