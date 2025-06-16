@@ -9,11 +9,11 @@ export const fetchCNPJData = async (cnpj: string) => {
     }
     
     return await response.json();
-  } catch (firstError) {
+  } catch {
     try {
       const response = await fetch(`https://publica.cnpj.ws/cnpj/${cleaned}`);
       return await response.json();
-    } catch (secondError) {
+    } catch {
       throw new Error('Serviço indisponível');
     }
   }

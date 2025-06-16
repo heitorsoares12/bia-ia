@@ -7,7 +7,7 @@ import styles from './Form.module.css'
 import { useState, useCallback  } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
 import PrivacyModal from '../Modal/PrivacyModal/PrivacyModal';
-import { isValidCNPJ } from '@/app/utils/cnpj'
+import { isValidCNPJ } from '@/client/utils/cnpj'
 
 const formSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),

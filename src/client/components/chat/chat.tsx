@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import styles from "./chat.module.css";
 import Markdown from "react-markdown";
-import { useAssistantStream } from "../../hooks/useAssistantStream";
-import { ChatMessage } from "../../types/chat";
+import { useAssistantStream } from "@/client/hooks/useAssistantStream";
+import { ChatMessage } from "@/shared/types/chat";
 import { FeedbackButtons } from "../FeedbackButtons/FeedbackButtons";
 import { AssistantStream } from "openai/lib/AssistantStream";
 
@@ -71,7 +71,7 @@ const Chat = () => {
     } else {
       createThread();
     }
-  }, []);
+  }, [setMessages, createThread]);
 
   useEffect(() => {
     localStorage.setItem("chatMessages", JSON.stringify(messages));
@@ -89,7 +89,7 @@ const Chat = () => {
       if (!res.ok) throw new Error("Falha ao criar thread");
       const data = await res.json();
       setThreadId(data.threadId);
-    } catch (err) {
+    } catch {
       setError({
         message: "Erro ao iniciar conversa. Por favor, tente novamente.",
         show: true
@@ -130,7 +130,7 @@ const Chat = () => {
       } else {
         throw new Error("Resposta vazia do servidor");
       }
-    } catch (err) {
+    } catch {
       setError({
         message: "Erro ao enviar mensagem. Por favor, tente novamente.",
         show: true
