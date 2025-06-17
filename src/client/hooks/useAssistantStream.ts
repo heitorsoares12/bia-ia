@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { AssistantStream } from "openai/lib/AssistantStream";
-import { ChatMessage } from "../types/chat";
+import { ChatMessage } from "@/shared/types/chat";
 
 export const useAssistantStream = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -48,7 +48,7 @@ export const useAssistantStream = () => {
       setIsLoading(false);
     });
 
-    stream.on("error", (error) => {
+    stream.on("error", () => {
       setError({
         message: "Erro durante a conversa. Por favor, tente novamente.",
         show: true

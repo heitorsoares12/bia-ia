@@ -1,8 +1,8 @@
 export const runtime = "edge"; // Mudando para Edge Runtime para melhor performance
 
 import { NextRequest } from 'next/server';
-import { openai } from '../../../../openai';
-import { assistantId } from '../../../../assistant.config';
+import { openai } from '@/server/utils/openai';
+import { assistantId } from '@/server/config/assistant';
 
 export async function POST(request: NextRequest, { params }: { params: { threadId: string } }) {
     try {

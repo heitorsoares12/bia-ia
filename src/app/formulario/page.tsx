@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from 'react';
-import { Form } from '../components/form/Form';
-import Chat from "../components/chat/chat";
+import { Form } from '@/client/components/form/Form';
+import Chat from '@/client/components/chat/chat';
 import styles from "./page.module.css";
 
 export default function FormPage() {

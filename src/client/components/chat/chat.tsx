@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import styles from "./chat.module.css";
 import Markdown from "react-markdown";
-import { useAssistantStream } from "../../hooks/useAssistantStream";
-import { ChatMessage } from "../../types/chat";
+import { useAssistantStream } from "@/client/hooks/useAssistantStream";
+import { ChatMessage } from "@/shared/types/chat";
 import { FeedbackButtons } from "../FeedbackButtons/FeedbackButtons";
 import { AssistantStream } from "openai/lib/AssistantStream";
 
@@ -54,6 +54,20 @@ const Chat = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const createThread = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/assistants/threads`, { method: "POST" });
+      if (!res.ok) throw new Error("Falha ao criar thread");
+      const data = await res.json();
+      setThreadId(data.threadId);
+    } catch {
+      setError({
+        message: "Erro ao iniciar conversa. Por favor, tente novamente.",
+        show: true
+      });
+    }
+  }, [setError]);
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -71,7 +85,7 @@ const Chat = () => {
     } else {
       createThread();
     }
-  }, []);
+  }, [setMessages, createThread]);
 
   useEffect(() => {
     localStorage.setItem("chatMessages", JSON.stringify(messages));
@@ -82,20 +96,6 @@ const Chat = () => {
       localStorage.setItem("threadId", threadId);
     }
   }, [threadId]);
-
-  const createThread = async () => {
-    try {
-      const res = await fetch(`/api/assistants/threads`, { method: "POST" });
-      if (!res.ok) throw new Error("Falha ao criar thread");
-      const data = await res.json();
-      setThreadId(data.threadId);
-    } catch (err) {
-      setError({
-        message: "Erro ao iniciar conversa. Por favor, tente novamente.",
-        show: true
-      });
-    }
-  };
 
   const handleFeedback = async (messageId: string, isPositive: boolean) => {
     if (feedbackGiven.has(messageId)) return;
@@ -130,7 +130,7 @@ const Chat = () => {
       } else {
         throw new Error("Resposta vazia do servidor");
       }
-    } catch (err) {
+    } catch {
       setError({
         message: "Erro ao enviar mensagem. Por favor, tente novamente.",
         show: true
