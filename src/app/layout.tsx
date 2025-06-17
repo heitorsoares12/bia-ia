@@ -13,7 +13,7 @@ import { ReactNode } from "react";
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="pt-BR">
-      <body className={inter.className}>
+      <body className={inter.className} suppressHydrationWarning>
         {children}
         {/* Você pode adicionar o logo da sua empresa aqui */}
         {/* <img className="logo" src="/logo-empresa.svg" alt="Logo da Empresa" /> */}
