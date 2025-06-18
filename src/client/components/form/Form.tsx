@@ -171,6 +171,15 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
       });
       const result = await res.json();
       if (!res.ok) throw new Error("Falha ao enviar");
+      localStorage.setItem(
+        "visitorData",
+        JSON.stringify({
+          nome: data.nome,
+          cargo: data.cargo,
+          area: data.area,
+          interesse: data.interesse,
+        })
+      );
       onSuccess?.(result.userId);
     } catch {
       toast.error("Erro ao enviar dados");

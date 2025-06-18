@@ -33,7 +33,11 @@ const Message = ({ role, text }: ChatMessage) => {
   }
 };
 
-const Chat = () => {
+interface ChatProps {
+  visitorId: string;
+}
+
+const Chat: React.FC<ChatProps> = ({ visitorId }) => {
   const [userInput, setUserInput] = useState("");
   const [inputDisabled, setInputDisabled] = useState(false);
   const [threadId, setThreadId] = useState("");
@@ -97,6 +101,17 @@ const Chat = () => {
     }
   }, [threadId]);
 
+  useEffect(() => {
+    if (threadId && messages.length === 0 && visitorId) {
+      const data = localStorage.getItem("visitorData");
+      if (data) {
+        const { nome, cargo, area, interesse } = JSON.parse(data);
+        const intro = `O visitante se chama ${nome}, atua em ${area} como ${cargo} e tem interesse em ${interesse}. Cumprimente-o pelo nome e ofere\u00e7a ajuda.`;
+        sendMessage(intro);
+      }
+    }
+  }, [threadId, messages.length, visitorId, sendMessage]);
+
   const handleFeedback = async (messageId: string, isPositive: boolean) => {
     if (feedbackGiven.has(messageId)) return;
     
@@ -112,14 +127,14 @@ const Chat = () => {
     }
   };
 
-  const sendMessage = async (text: string) => {
+  const sendMessage = useCallback(async (text: string) => {
     setIsLoading(true);
     setError({ message: "", show: false });
-    
+
     try {
       const response = await fetch(
         `/api/assistants/threads/${threadId}/messages`,
-        { method: "POST", body: JSON.stringify({ content: text }) }
+        { method: "POST", body: JSON.stringify({ content: text, visitorId }) }
       );
 
       if (!response.ok) throw new Error("Falha ao enviar mensagem");
@@ -139,7 +154,7 @@ const Chat = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [threadId, visitorId, handleReadableStream, setError, setIsLoading]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

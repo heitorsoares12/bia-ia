@@ -15,7 +15,7 @@ export default function FormPage() {
       ) : (
         <main className={styles.main}>
           <div className={styles.container}>
-            <Chat />
+            <Chat visitorId={visitorId} />
           </div>
         </main>
       )}

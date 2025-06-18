@@ -1,15 +1,18 @@
-export const runtime = "edge"; // Mudando para Edge Runtime para melhor performance
+export const runtime = "nodejs";
 
 import { NextRequest } from 'next/server';
 import { openai } from '@/server/utils/openai';
 import { assistantId } from '@/server/config/assistant';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest, { params }: { params: { threadId: string } }) {
     try {
-        const { content } = await request.json();
-        
+        const { content, visitorId } = await request.json();
+
         // Validações rápidas
-        if (!assistantId || !params.threadId || !content) {
+        if (!assistantId || !params.threadId || !content || !visitorId) {
             return Response.json(
                 { error: "Parâmetros inválidos" },
                 { status: 400 }
@@ -27,11 +30,39 @@ export async function POST(request: NextRequest, { params }: { params: { threadI
             setTimeout(() => reject(new Error('Timeout ao enviar mensagem')), 10000);
         });
 
+        await prisma.message.create({
+            data: {
+                content,
+                sender: 'user',
+                visitorId: Number(visitorId)
+            }
+        });
+
         await Promise.race([messagePromise, timeoutPromise]);
         
         // Iniciar execução do assistente
         const stream = await openai.beta.threads.runs.createAndStream(params.threadId, {
             assistant_id: assistantId,
+        });
+
+        let assistantText = '';
+        stream.on('textDelta', (delta) => {
+            if (delta.value) assistantText += delta.value;
+        });
+
+        stream.on('end', async () => {
+            await prisma.message.create({
+                data: {
+                    content: assistantText,
+                    sender: 'bot',
+                    visitorId: Number(visitorId)
+                }
+            });
+            await prisma.$disconnect();
+        });
+
+        stream.on('error', async () => {
+            await prisma.$disconnect();
         });
 
         return new Response(stream.toReadableStream(), {
@@ -49,4 +80,6 @@ export async function POST(request: NextRequest, { params }: { params: { threadI
             { status: 500 }
         );
     }
+
 }
+
