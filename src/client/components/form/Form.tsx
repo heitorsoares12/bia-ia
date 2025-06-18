@@ -228,9 +228,14 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
               onBlur={handleCnpjBlur}
               placeholder="00.000.000/0000-00"
               aria-invalid={!!errors.cnpj}
+              aria-describedby={errors.cnpj ? "cnpj-error" : undefined}
+              aria-label="CNPJ"
+              aria-busy={isFetching}
             />
             {errors.cnpj && (
-              <span className={styles.errorMessage}>{errors.cnpj.message}</span>
+              <span id="cnpj-error" role="alert" className={styles.errorMessage}>
+                {errors.cnpj.message}
+              </span>
             )}
             {isFetching && (
               <div className={styles.loaderContainer}>
@@ -293,7 +298,7 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
           />
         </div>
 
-        <div className={styles.lgpdContainer}>
+        <div className={`${styles.lgpdContainer} ${errors.lgpdConsent ? styles.lgpdContainerError : ''}`}>
           <div className={styles.checkboxGroup}>
             <input
               type="checkbox"
@@ -301,6 +306,10 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
               {...register("lgpdConsent")}
               onChange={handleLgpdChange}
               className={styles.checkbox}
+              aria-required="true"
+              aria-invalid={!!errors.lgpdConsent}
+              aria-label="Consentimento de LGPD"
+              aria-describedby={errors.lgpdConsent ? "lgpdConsent-error" : undefined}
             />
             <label htmlFor="lgpdConsent" className={styles.lgpdLabel}>
               Li e concordo com a&nbsp;
@@ -311,6 +320,7 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
                   e.preventDefault();
                   setShowPolicy(true);
                 }}
+                aria-label="Abrir política de privacidade"
               >
                 Política de Privacidade
               </button>
@@ -318,7 +328,7 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
             </label>
           </div>
           {errors.lgpdConsent && (
-            <span className={styles.errorMessage}>
+            <span id="lgpdConsent-error" role="alert" className={styles.errorMessage}>
               {errors.lgpdConsent.message}
             </span>
           )}
@@ -330,6 +340,7 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
           type="submit"
           className={styles.submitButton}
           disabled={!isValid}
+          aria-label="Iniciar conversa"
         >
           Iniciar conversa
         </button>
@@ -352,9 +363,15 @@ const InputField = ({ label, id, error, ...props }: InputFieldProps) => (
       id={id}
       className={`${styles.input} ${error ? styles.inputError : ""}`}
       aria-invalid={!!error}
+      aria-label={label}
+      aria-describedby={error ? `${id}-error` : undefined}
       {...props}
     />
-    {error && <span className={styles.errorMessage}>{error.message}</span>}
+    {error && (
+      <span id={`${id}-error`} role="alert" className={styles.errorMessage}>
+        {error.message}
+      </span>
+    )}
   </div>
 );
 
@@ -379,6 +396,8 @@ const SelectField = ({
       id={id}
       className={`${styles.select} ${error ? styles.inputError : ""}`}
       aria-invalid={!!error}
+      aria-label={label}
+      aria-describedby={error ? `${id}-error` : undefined}
       {...props}
     >
       {options.map((opt) => (
@@ -387,6 +406,10 @@ const SelectField = ({
         </option>
       ))}
     </select>
-    {error && <span className={styles.errorMessage}>{error.message}</span>}
+    {error && (
+      <span id={`${id}-error`} role="alert" className={styles.errorMessage}>
+        {error.message}
+      </span>
+    )}
   </div>
 );
