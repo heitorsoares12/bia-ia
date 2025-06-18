@@ -9,6 +9,27 @@ import toast, { Toaster } from "react-hot-toast";
 import PrivacyModal from "../Modal/PrivacyModal/PrivacyModal";
 import { isValidCNPJ } from "@/client/utils/cnpj";
 
+const cargoOptions = [
+  { value: "comprador", label: "Comprador" },
+  { value: "gerenteCompras", label: "Gerente de Compras" },
+  { value: "proprietario", label: "Proprietário" },
+  { value: "gerenteVendas", label: "Gerente de Vendas" },
+  { value: "vendedor", label: "Vendedor" },
+  { value: "arquitetoDecorador", label: "Arquitetura/Decorador" },
+  { value: "engenheiro", label: "Engenheiro" },
+  { value: "outros", label: "Outros" },
+] as const;
+
+const areaOptions = [
+  { value: "construcaoCivil", label: "Construção Civil" },
+  { value: "arquiteturaDecoracao", label: "Arquitetura/Decoração" },
+  { value: "industriaMoveleira", label: "Indústria Moveleira" },
+  { value: "automotivo", label: "Automotivo" },
+  { value: "naval", label: "Naval" },
+  { value: "varejoMateriais", label: "Varejo de Materiais" },
+  { value: "outros", label: "Outros" },
+] as const;
+
 const formSchema = z.object({
   nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   email: z.string().email("E-mail inválido"),
@@ -19,7 +40,10 @@ const formSchema = z.object({
       message: "CNPJ inválido",
     }),
   empresa: z.string().min(2, "Empresa é obrigatória"),
-  cargo: z.string().min(2, "Cargo é obrigatório"),
+  cargo: z.enum(cargoOptions.map((c) => c.value) as [string, ...string[]]),
+  cargoOutro: z.string().optional(),
+  area: z.enum(areaOptions.map((a) => a.value) as [string, ...string[]]),
+  areaOutro: z.string().optional(),
   interesse: z.enum(["produto", "servico", "parceria", "outro"]),
   lgpdConsent: z.boolean().refine((val) => val, {
     message: "Você deve consentir com a política de privacidade",
@@ -43,6 +67,7 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
     formState: { errors, isValid },
     setValue,
     trigger,
+    watch,
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     mode: "onBlur",
@@ -50,6 +75,9 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
       lgpdConsent: false,
     },
   });
+
+  const cargoSelected = watch("cargo");
+  const areaSelected = watch("area");
 
   const handleLgpdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setValue("lgpdConsent", e.target.checked);
@@ -69,50 +97,56 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
     }${match[4] ? "/" + match[4] : ""}${match[5] ? "-" + match[5] : ""}`;
   };
 
-  const fetchCompanyData = useCallback(async (cnpj: string) => {
-    const cleanedCNPJ = cnpj.replace(/\D/g, '');
-    if (cleanedCNPJ.length !== 14) return;
+  const fetchCompanyData = useCallback(
+    async (cnpj: string) => {
+      const cleanedCNPJ = cnpj.replace(/\D/g, "");
+      if (cleanedCNPJ.length !== 14) return;
 
-    setIsFetching(true);
-    const brasilApiUrl = `https://brasilapi.com.br/api/cnpj/v1/${cleanedCNPJ}`;
-    const cnpjWsUrl = `https://publica.cnpj.ws/cnpj/${cleanedCNPJ}`;
+      setIsFetching(true);
+      const brasilApiUrl = `https://brasilapi.com.br/api/cnpj/v1/${cleanedCNPJ}`;
+      const cnpjWsUrl = `https://publica.cnpj.ws/cnpj/${cleanedCNPJ}`;
 
-    const fetchBrasilApi = async () => {
-      const response = await fetch(brasilApiUrl);
-      if (response.status === 429 || response.status >= 500) {
-        throw new Error('API overloaded');
-      }
-      const data = await response.json();
-      if (data.message || !data.nome_fantasia) {
-        throw new Error(data.message || 'CNPJ não encontrado na BrasilAPI');
-      }
-      return data.nome_fantasia as string;
-    };
+      const fetchBrasilApi = async () => {
+        const response = await fetch(brasilApiUrl);
+        if (response.status === 429 || response.status >= 500) {
+          throw new Error("API overloaded");
+        }
+        const data = await response.json();
+        if (data.message || !data.nome_fantasia) {
+          throw new Error(data.message || "CNPJ não encontrado na BrasilAPI");
+        }
+        return data.nome_fantasia as string;
+      };
 
-    const fetchCnpjWs = async () => {
-      const response = await fetch(cnpjWsUrl);
-      if (!response.ok) {
-        throw new Error('Erro na segunda API');
-      }
-      const data = await response.json();
-      if (!data.estabelecimento?.nome_fantasia) {
-        throw new Error('CNPJ não encontrado');
-      }
-      return data.estabelecimento.nome_fantasia as string;
-    };
+      const fetchCnpjWs = async () => {
+        const response = await fetch(cnpjWsUrl);
+        if (!response.ok) {
+          throw new Error("Erro na segunda API");
+        }
+        const data = await response.json();
+        if (!data.estabelecimento?.nome_fantasia) {
+          throw new Error("CNPJ não encontrado");
+        }
+        return data.estabelecimento.nome_fantasia as string;
+      };
 
-    try {
-      const nomeFantasia = await Promise.any([fetchBrasilApi(), fetchCnpjWs()]);
-      setValue('empresa', nomeFantasia);
-      trigger('empresa');
-      toast.success('Dados da empresa carregados!');
-    } catch (err) {
-      toast.error('Falha ao buscar CNPJ. Preencha manualmente.');
-      console.error('Falha ao buscar CNPJ:', err);
-    } finally {
-      setIsFetching(false);
-    }
-  }, [setValue, trigger]);
+      try {
+        const nomeFantasia = await Promise.any([
+          fetchBrasilApi(),
+          fetchCnpjWs(),
+        ]);
+        setValue("empresa", nomeFantasia);
+        trigger("empresa");
+        toast.success("Dados da empresa carregados!");
+      } catch (err) {
+        toast.error("Falha ao buscar CNPJ. Preencha manualmente.");
+        console.error("Falha ao buscar CNPJ:", err);
+      } finally {
+        setIsFetching(false);
+      }
+    },
+    [setValue, trigger]
+  );
 
   const handleCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatCNPJ(e.target.value);
@@ -128,8 +162,19 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
     }
   };
 
-  const onSubmit = () => {
-    onSuccess?.(cnpjValue);
+  const onSubmit = async (data: FormValues) => {
+    try {
+      const res = await fetch("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error("Falha ao enviar");
+      onSuccess?.(result.userId);
+    } catch {
+      toast.error("Erro ao enviar dados");
+    }
   };
 
   return (
@@ -188,7 +233,12 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
               <span className={styles.errorMessage}>{errors.cnpj.message}</span>
             )}
             {isFetching && (
-              <span className={styles.errorMessage}>Buscando dados...</span>
+              <div className={styles.loaderContainer}>
+                <div className={styles.loader}></div>
+                <span className={styles.loaderText}>
+                  Buscando dados do CNPJ...
+                </span>
+              </div>
             )}
           </div>
 
@@ -199,12 +249,35 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
             {...register("empresa")}
           />
 
-          <InputField
-            label="Cargo"
+          <SelectField
+            label="Cargo*"
             id="cargo"
+            options={cargoOptions}
             error={errors.cargo}
-            {...register("cargo")}
+            {...register("cargo", { required: true })}
           />
+          {cargoSelected === "outros" && (
+            <InputField
+              label="Informe o cargo"
+              id="cargoOutro"
+              {...register("cargoOutro")}
+            />
+          )}
+
+          <SelectField
+            label="Área de Atuação*"
+            id="area"
+            options={areaOptions}
+            error={errors.area}
+            {...register("area", { required: true })}
+          />
+          {areaSelected === "outros" && (
+            <InputField
+              label="Informe a área"
+              id="areaOutro"
+              {...register("areaOutro")}
+            />
+          )}
 
           <SelectField
             label="Interesse principal*"
@@ -287,7 +360,7 @@ const InputField = ({ label, id, error, ...props }: InputFieldProps) => (
 
 type SelectFieldProps = React.SelectHTMLAttributes<HTMLSelectElement> & {
   label: string;
-  options: Array<{ value: string; label: string }>;
+  options: ReadonlyArray<{ value: string; label: string }>;
   error?: { message?: string };
 };
 

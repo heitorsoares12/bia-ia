@@ -23,6 +23,7 @@ O objetivo é fornecer um canal de atendimento automático que:
 * **Formulário Inicial:** Captura de dados pessoais e aceite da política de privacidade.
 * **Chatbot IA:** Interface de chat baseada em **Next.js** e integração com a **OpenAI API**, treinada com os dados de tintas da Brancotex.
 * **Persistência de Dados:** Salvamento de visitantes e histórico de mensagens em banco de dados **SQLite via Prisma**.
+* **Feedback Final:** Captura de dados sobre como foi a experiencia do usuário.
 * **Painel Administrativo (Opcional):** Página protegida para visualizar visitantes e conversas.
 * **Deploy:** Publicação da aplicação em servidor **VPS da Hostinger**.
 
