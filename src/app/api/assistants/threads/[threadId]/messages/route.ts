@@ -7,7 +7,12 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export async function POST(request: NextRequest, { params }: { params: { threadId: string } }) {
+export async function POST(
+    request: NextRequest,
+    context: { params: { threadId: string } }
+) {
+    const { params } = context;
+    const { threadId } = params;
     try {
         const { content, visitorId } = await request.json();
 
@@ -20,7 +25,7 @@ export async function POST(request: NextRequest, { params }: { params: { threadI
         }
 
         // Criar mensagem no thread com um timeout
-        const messagePromise = openai.beta.threads.messages.create(params.threadId, {
+        const messagePromise = openai.beta.threads.messages.create(threadId, {
             role: "user",
             content: content,
         });
@@ -39,9 +44,9 @@ export async function POST(request: NextRequest, { params }: { params: { threadI
         });
 
         await Promise.race([messagePromise, timeoutPromise]);
-        
+
         // Iniciar execução do assistente
-        const stream = await openai.beta.threads.runs.createAndStream(params.threadId, {
+        const stream = await openai.beta.threads.runs.createAndStream(threadId, {
             assistant_id: assistantId,
         });
 

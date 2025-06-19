@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import styles from "./Form.module.css";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import PrivacyModal from "../Modal/PrivacyModal/PrivacyModal";
 import { isValidCNPJ } from "@/client/utils/cnpj";
@@ -71,10 +71,32 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     mode: "onBlur",
+    // defaultValues: {
+    //   lgpdConsent: false,
+    // },
     defaultValues: {
-      lgpdConsent: false,
+      nome: "Fulano Teste",
+      email: `teste${Math.floor(Math.random() * 10000)}@exemplo.com`,
+      cnpj: "52561214000130",
+      empresa: "Empresa Teste",
+      cargo: "comprador",
+      cargoOutro: "",
+      area: "construcaoCivil",
+      areaOutro: "",
+      interesse: "produto",
+      lgpdConsent: true,
     },
   });
+
+  useEffect(() => {
+    trigger(); // Dispara a validação de todos os campos
+  }, [trigger]);
+
+  useEffect(() => {
+  if (watch("cnpj")) {
+    setCnpjValue(formatCNPJ(watch("cnpj")));
+  }
+}, [watch]);
 
   const cargoSelected = watch("cargo");
   const areaSelected = watch("area");
