@@ -13,15 +13,64 @@ export async function POST(
 ) {
     const { threadId } = await params;
     try {
-        const { content, visitorId } = await request.json();
+        const { content, visitorId, visitorData } = await request.json();
 
-        // Validações rápidas
-        if (!assistantId || !threadId || !content || !visitorId) {
+        if (!assistantId || !threadId || !content) {
             return Response.json(
                 { error: "Parâmetros inválidos" },
                 { status: 400 }
             );
         }
+
+        let numericVisitorId: number | null = null;
+
+        if (visitorId !== undefined && visitorId !== null) {
+            numericVisitorId = Number(visitorId);
+            if (Number.isNaN(numericVisitorId)) {
+                return Response.json(
+                    { error: "visitorId inválido" },
+                    { status: 400 }
+                );
+            }
+            const exists = await prisma.visitor.findUnique({ where: { id: numericVisitorId } });
+            if (!exists) {
+                if (visitorData) {
+                    const newVisitor = await prisma.visitor.create({
+                        data: {
+                            nome: visitorData.nome ?? 'Visitante',
+                            email: visitorData.email ?? `anon-${Date.now()}@example.com`,
+                            telefone: visitorData.telefone ?? '0000000000',
+                            cnpj: visitorData.cnpj ?? '00000000000000',
+                            consentimento: visitorData.consentimento ?? true,
+                        }
+                    });
+                    numericVisitorId = newVisitor.id;
+                } else {
+                    return Response.json(
+                        { error: "Visitante não encontrado" },
+                        { status: 400 }
+                    );
+                }
+            }
+        } else if (visitorData) {
+            const newVisitor = await prisma.visitor.create({
+                data: {
+                    nome: visitorData.nome ?? 'Visitante',
+                    email: visitorData.email ?? `anon-${Date.now()}@example.com`,
+                    telefone: visitorData.telefone ?? '0000000000',
+                    cnpj: visitorData.cnpj ?? '00000000000000',
+                    consentimento: visitorData.consentimento ?? true,
+                }
+            });
+            numericVisitorId = newVisitor.id;
+        } else {
+            return Response.json(
+                { error: "visitorId obrigatório" },
+                { status: 400 }
+            );
+        }
+
+        console.log('Usando visitorId:', numericVisitorId);
 
         // Criar mensagem no thread com um timeout
         const messagePromise = openai.beta.threads.messages.create(threadId, {
@@ -38,7 +87,7 @@ export async function POST(
             data: {
                 content,
                 sender: 'user',
-                visitorId: Number(visitorId)
+                visitorId: numericVisitorId as number
             }
         });
 
@@ -59,7 +108,7 @@ export async function POST(
                 data: {
                     content: assistantText,
                     sender: 'bot',
-                    visitorId: Number(visitorId)
+                    visitorId: numericVisitorId as number
                 }
             });
             await prisma.$disconnect();
@@ -83,7 +132,8 @@ export async function POST(
             { error: "Erro ao processar sua mensagem: " + errorMessage },
             { status: 500 }
         );
+    } finally {
+        await prisma.$disconnect();
     }
 
 }
-

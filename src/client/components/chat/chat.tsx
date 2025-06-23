@@ -37,11 +37,24 @@ interface ChatProps {
   visitorId: string;
 }
 
+export interface VisitorData {
+  nome?: string;
+  cargo?: string;
+  area?: string;
+  interesse?: string;
+  email?: string;
+  telefone?: string;
+  cnpj?: string;
+  consentimento?: boolean;
+}
+
 const Chat: React.FC<ChatProps> = ({ visitorId }) => {
   const [userInput, setUserInput] = useState("");
   const [inputDisabled, setInputDisabled] = useState(false);
   const [threadId, setThreadId] = useState("");
   const [feedbackGiven, setFeedbackGiven] = useState<Set<string>>(new Set());
+  const [visitorData, setVisitorData] = useState<VisitorData | null>(null);
+  const visitorDataRef = useRef<VisitorData | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const { 
@@ -92,6 +105,19 @@ const Chat: React.FC<ChatProps> = ({ visitorId }) => {
   }, [setMessages, createThread]);
 
   useEffect(() => {
+    const stored = localStorage.getItem("visitorData");
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      setVisitorData(parsed);
+      visitorDataRef.current = parsed;
+    }
+  }, []);
+
+  useEffect(() => {
+    visitorDataRef.current = visitorData;
+  }, [visitorData]);
+
+  useEffect(() => {
     localStorage.setItem("chatMessages", JSON.stringify(messages));
   }, [messages]);
 
@@ -108,7 +134,14 @@ const Chat: React.FC<ChatProps> = ({ visitorId }) => {
     try {
       const response = await fetch(
         `/api/assistants/threads/${threadId}/messages`,
-        { method: "POST", body: JSON.stringify({ content: text, visitorId }) }
+        {
+          method: "POST",
+          body: JSON.stringify({
+            content: text,
+            visitorId: Number(visitorId),
+            visitorData: visitorDataRef.current,
+          }),
+        }
       );
 
       if (!response.ok) throw new Error("Falha ao enviar mensagem");
@@ -134,7 +167,10 @@ const Chat: React.FC<ChatProps> = ({ visitorId }) => {
     if (threadId && messages.length === 0 && visitorId) {
       const data = localStorage.getItem("visitorData");
       if (data) {
-        const { nome, cargo, area, interesse } = JSON.parse(data);
+        const parsed = JSON.parse(data);
+        setVisitorData(parsed);
+        visitorDataRef.current = parsed;
+        const { nome, cargo, area, interesse } = parsed;
         const intro = `O visitante se chama ${nome}, atua em ${area} como ${cargo} e tem interesse em ${interesse}. Cumprimente-o pelo nome e ofere\u00e7a ajuda.`;
         sendMessage(intro);
       }

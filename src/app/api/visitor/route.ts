@@ -4,24 +4,31 @@ import { NextResponse } from 'next/server';
 const prisma = new PrismaClient();
 
 interface RequestBody {
-  nome: string;
-  email: string;
-  telefone: string;
-  cnpj: string;
-  consentimento: boolean;
+  nome?: string;
+  email?: string;
+  telefone?: string;
+  cnpj?: string;
+  consentimento?: boolean;
 }
 
 export async function POST(req: Request) {
   const data: RequestBody = await req.json();
+
+  if (!data.nome || !data.email) {
+    return NextResponse.json(
+      { error: 'Nome e email são obrigatórios' },
+      { status: 400 }
+    );
+  }
 
   try {
     const visitor = await prisma.visitor.create({
       data: {
         nome: data.nome,
         email: data.email,
-        telefone: data.telefone,
-        cnpj: data.cnpj,
-        consentimento: data.consentimento
+        telefone: data.telefone ?? '0000000000',
+        cnpj: data.cnpj ?? '00000000000000',
+        consentimento: data.consentimento ?? true
       }
     });
 

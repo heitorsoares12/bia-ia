@@ -186,10 +186,17 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
 
   const onSubmit = async (data: FormValues) => {
     try {
-      const res = await fetch("/api/users", {
+      const payload = {
+        nome: data.nome,
+        email: data.email,
+        cnpj: data.cnpj,
+        consentimento: data.lgpdConsent,
+      };
+
+      const res = await fetch("/api/visitor", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
       const result = await res.json();
       if (!res.ok) throw new Error("Falha ao enviar");
@@ -202,7 +209,7 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
           interesse: data.interesse,
         })
       );
-      onSuccess?.(result.userId);
+      onSuccess?.(result.visitorId);
     } catch {
       toast.error("Erro ao enviar dados");
     }
