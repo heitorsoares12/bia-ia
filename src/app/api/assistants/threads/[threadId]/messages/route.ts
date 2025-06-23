@@ -9,15 +9,14 @@ const prisma = new PrismaClient();
 
 export async function POST(
     request: NextRequest,
-    context: { params: { threadId: string } }
+    { params }: { params: { threadId: string } | Promise<{ threadId: string }> }
 ) {
-    const { params } = context;
-    const { threadId } = params;
+    const { threadId } = await params;
     try {
         const { content, visitorId } = await request.json();
 
         // Validações rápidas
-        if (!assistantId || !params.threadId || !content || !visitorId) {
+        if (!assistantId || !threadId || !content || !visitorId) {
             return Response.json(
                 { error: "Parâmetros inválidos" },
                 { status: 400 }

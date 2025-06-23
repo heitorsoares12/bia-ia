@@ -101,32 +101,6 @@ const Chat: React.FC<ChatProps> = ({ visitorId }) => {
     }
   }, [threadId]);
 
-  useEffect(() => {
-    if (threadId && messages.length === 0 && visitorId) {
-      const data = localStorage.getItem("visitorData");
-      if (data) {
-        const { nome, cargo, area, interesse } = JSON.parse(data);
-        const intro = `O visitante se chama ${nome}, atua em ${area} como ${cargo} e tem interesse em ${interesse}. Cumprimente-o pelo nome e ofere\u00e7a ajuda.`;
-        sendMessage(intro);
-      }
-    }
-  }, [threadId, messages.length, visitorId, sendMessage]);
-
-  const handleFeedback = async (messageId: string, isPositive: boolean) => {
-    if (feedbackGiven.has(messageId)) return;
-    
-    try {
-      await fetch(`/api/feedback`, {
-        method: "POST",
-        body: JSON.stringify({ threadId, messageId, isPositive }),
-      });
-      
-      setFeedbackGiven(prev => new Set(prev).add(messageId));
-    } catch (err) {
-      console.error("Erro ao enviar feedback:", err);
-    }
-  };
-
   const sendMessage = useCallback(async (text: string) => {
     setIsLoading(true);
     setError({ message: "", show: false });
@@ -155,6 +129,32 @@ const Chat: React.FC<ChatProps> = ({ visitorId }) => {
       setIsLoading(false);
     }
   }, [threadId, visitorId, handleReadableStream, setError, setIsLoading]);
+
+  useEffect(() => {
+    if (threadId && messages.length === 0 && visitorId) {
+      const data = localStorage.getItem("visitorData");
+      if (data) {
+        const { nome, cargo, area, interesse } = JSON.parse(data);
+        const intro = `O visitante se chama ${nome}, atua em ${area} como ${cargo} e tem interesse em ${interesse}. Cumprimente-o pelo nome e ofere\u00e7a ajuda.`;
+        sendMessage(intro);
+      }
+    }
+  }, [threadId, messages.length, visitorId, sendMessage]);
+
+  const handleFeedback = async (messageId: string, isPositive: boolean) => {
+    if (feedbackGiven.has(messageId)) return;
+    
+    try {
+      await fetch(`/api/feedback`, {
+        method: "POST",
+        body: JSON.stringify({ threadId, messageId, isPositive }),
+      });
+      
+      setFeedbackGiven(prev => new Set(prev).add(messageId));
+    } catch (err) {
+      console.error("Erro ao enviar feedback:", err);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
