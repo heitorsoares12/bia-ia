@@ -7,24 +7,54 @@ datasource db {
   url      = "file:./dev.db"
 }
 
+enum ConversationStatus {
+  OPEN
+  CLOSED
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
 model Visitor {
-  id           Int      @id @default(autoincrement())
-  nome         String
-  email        String   @unique
-  telefone     String
-  cnpj         String
-  consentimento Boolean
-  createdAt    DateTime @default(now())
-  messages     Message[]
+  id          String         @id @default(uuid())
+  nome        String
+  email       String         @unique
+  cnpj        String?
+  cargo       String?
+  areaAtuacao String?
+  interesse   String?
+  conversations Conversation[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model Conversation {
+  id         String             @id @default(uuid())
+  visitorId  String
+  threadId   String?
+  status     ConversationStatus @default(OPEN)
+  startedAt  DateTime
+  endedAt    DateTime?
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  visitor    Visitor            @relation(fields: [visitorId], references: [id])
+  messages   Message[]
+
+  @@index([visitorId])
 }
 
 model Message {
-  id         Int      @id @default(autoincrement())
-  content    String
-  sender     String   // "user" ou "bot"
-  timestamp  DateTime @default(now())
-  visitorId  Int
-  visitor    Visitor  @relation(fields: [visitorId], references: [id])
+  id             String       @id @default(uuid())
+  conversationId String
+  role           MessageRole
+  content        String
+  timestamp      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+
+  @@index([conversationId])
 }
 
 model User {
