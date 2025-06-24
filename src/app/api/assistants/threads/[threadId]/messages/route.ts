@@ -94,7 +94,7 @@ export async function POST(
         await Promise.race([messagePromise, timeoutPromise]);
 
         // Iniciar execução do assistente
-        const stream = await openai.beta.threads.runs.createAndStream(threadId, {
+        const stream = await openai.beta.threads.runs.stream(threadId, {
             assistant_id: assistantId,
         });
 
