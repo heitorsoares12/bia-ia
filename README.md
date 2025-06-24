@@ -10,6 +10,7 @@ Um chatbot inteligente construído com Next.js e OpenAI.
 - Sistema de feedback para respostas
 - Tratamento de erros
 - Suporte a Markdown nas respostas
+- Gerenciamento de conversas com histórico
 
 ## Como usar
 
