@@ -16,6 +16,7 @@ Um chatbot inteligente construído com Next.js e OpenAI.
 
 1. Configure as variáveis de ambiente:
    ```env
+   OPENAI_ASSISTANT_ID=seu_assistant_id
    NEXT_PUBLIC_OPENAI_ASSISTANT_ID=seu_assistant_id
    OPENAI_API_KEY=sua_api_key
    ```
@@ -39,3 +40,4 @@ Um chatbot inteligente construído com Next.js e OpenAI.
 - OpenAI API (Assistants)
 - React Markdown
 - CSS Modules
+\n### Endpoints principais\n- POST /api/chat/start\n- POST /api/chat/send\n- POST /api/chat/end\n- GET  /api/chat/conversation/:id\n
