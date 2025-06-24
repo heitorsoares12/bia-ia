@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client'
 import { NextResponse } from 'next/server'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/server/utils/prisma'
 export const runtime = 'nodejs'
 
 export async function POST(req: Request, { params }: { params: { conversationId: string } }) {

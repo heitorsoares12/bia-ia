@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
 import { openai } from '@/server/utils/openai'
 import { assistantId } from '@/server/config/assistant'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/server/utils/prisma'
 export const runtime = 'nodejs'
 
 export async function POST(request: NextRequest, { params }: { params: { conversationId: string } }) {

@@ -22,7 +22,7 @@ export default function FormPage() {
   }, []);
 
   const startChat = async (visitorId: string) => {
-    const res = await fetch('/api/conversations', {
+    const res = await fetch('/api/chat/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ visitorId })

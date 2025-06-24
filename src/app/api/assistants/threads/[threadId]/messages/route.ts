@@ -3,9 +3,7 @@ export const runtime = "nodejs";
 import { NextRequest } from 'next/server';
 import { openai } from '@/server/utils/openai';
 import { assistantId } from '@/server/config/assistant';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/server/utils/prisma';
 
 export async function POST(
     request: NextRequest,

@@ -98,11 +98,11 @@ const Chat: React.FC<ChatProps> = ({ visitorId, conversationId, threadId, onEnd 
 
     try {
       const response = await fetch(
-        `/api/conversations/${conversationId}/messages`,
+        `/api/chat/send`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content: text }),
+          body: JSON.stringify({ conversationId, content: text }),
         }
       );
 
@@ -126,7 +126,11 @@ const Chat: React.FC<ChatProps> = ({ visitorId, conversationId, threadId, onEnd 
   }, [conversationId, handleReadableStream, setError, setIsLoading]);
 
   const endConversation = async () => {
-    await fetch(`/api/conversations/${conversationId}/end`, { method: 'POST' });
+    await fetch(`/api/chat/end`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ conversationId })
+    });
     setMessages([]);
     localStorage.removeItem('visitorId');
     localStorage.removeItem('conversationId');
