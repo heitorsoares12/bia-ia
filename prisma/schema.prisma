@@ -16,15 +16,30 @@ model Visitor {
   consentimento Boolean
   createdAt    DateTime @default(now())
   messages     Message[]
+  conversations Conversation[]
 }
 
 model Message {
-  id         Int      @id @default(autoincrement())
-  content    String
-  sender     String   // "user" ou "bot"
-  timestamp  DateTime @default(now())
-  visitorId  Int
-  visitor    Visitor  @relation(fields: [visitorId], references: [id])
+  id              String        @id @default(cuid())
+  visitorId       Int
+  visitor         Visitor       @relation(fields: [visitorId], references: [id])
+  conversationId  String
+  conversation    Conversation  @relation(fields: [conversationId], references: [id])
+  role            String
+  content         String
+  createdAt       DateTime      @default(now())
+}
+
+model Conversation {
+  id           String     @id @default(cuid())
+  threadId     String
+  visitorId    Int
+  visitor      Visitor    @relation(fields: [visitorId], references: [id])
+  startedAt    DateTime   @default(now())
+  endedAt      DateTime?
+  duration     Int?
+  status       String     @default("open")
+  messages     Message[]
 }
 
 model User {

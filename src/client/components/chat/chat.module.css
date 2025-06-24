@@ -111,3 +111,14 @@
 .feedbackButtons button:hover {
   opacity: 1;
 }
+
+.endButton {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: #dc3545;
+  border: none;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  align-self: flex-end;
+}

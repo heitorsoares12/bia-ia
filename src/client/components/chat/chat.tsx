@@ -35,6 +35,9 @@ const Message = ({ role, text }: ChatMessage) => {
 
 interface ChatProps {
   visitorId: string;
+  conversationId: string;
+  threadId: string;
+  onEnd: () => void;
 }
 
 export interface VisitorData {
@@ -48,10 +51,9 @@ export interface VisitorData {
   consentimento?: boolean;
 }
 
-const Chat: React.FC<ChatProps> = ({ visitorId }) => {
+const Chat: React.FC<ChatProps> = ({ visitorId, conversationId, threadId, onEnd }) => {
   const [userInput, setUserInput] = useState("");
   const [inputDisabled, setInputDisabled] = useState(false);
-  const [threadId, setThreadId] = useState("");
   const [feedbackGiven, setFeedbackGiven] = useState<Set<string>>(new Set());
   const [visitorData, setVisitorData] = useState<VisitorData | null>(null);
   const visitorDataRef = useRef<VisitorData | null>(null);
@@ -71,38 +73,11 @@ const Chat: React.FC<ChatProps> = ({ visitorId }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const createThread = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/assistants/threads`, { method: "POST" });
-      if (!res.ok) throw new Error("Falha ao criar thread");
-      const data = await res.json();
-      setThreadId(data.threadId);
-    } catch {
-      setError({
-        message: "Erro ao iniciar conversa. Por favor, tente novamente.",
-        show: true
-      });
-    }
-  }, [setError]);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  useEffect(() => {
-    const savedMessages = localStorage.getItem("chatMessages");
-    const savedThreadId = localStorage.getItem("threadId");
-    
-    if (savedMessages) {
-      setMessages(JSON.parse(savedMessages));
-    }
-    
-    if (savedThreadId) {
-      setThreadId(savedThreadId);
-    } else {
-      createThread();
-    }
-  }, [setMessages, createThread]);
 
   useEffect(() => {
     const stored = localStorage.getItem("visitorData");
@@ -117,30 +92,17 @@ const Chat: React.FC<ChatProps> = ({ visitorId }) => {
     visitorDataRef.current = visitorData;
   }, [visitorData]);
 
-  useEffect(() => {
-    localStorage.setItem("chatMessages", JSON.stringify(messages));
-  }, [messages]);
-
-  useEffect(() => {
-    if (threadId) {
-      localStorage.setItem("threadId", threadId);
-    }
-  }, [threadId]);
-
   const sendMessage = useCallback(async (text: string) => {
     setIsLoading(true);
     setError({ message: "", show: false });
 
     try {
       const response = await fetch(
-        `/api/assistants/threads/${threadId}/messages`,
+        `/api/conversations/${conversationId}/messages`,
         {
           method: "POST",
-          body: JSON.stringify({
-            content: text,
-            visitorId: Number(visitorId),
-            visitorData: visitorDataRef.current,
-          }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: text }),
         }
       );
 
@@ -161,7 +123,16 @@ const Chat: React.FC<ChatProps> = ({ visitorId }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [threadId, visitorId, handleReadableStream, setError, setIsLoading]);
+  }, [conversationId, handleReadableStream, setError, setIsLoading]);
+
+  const endConversation = async () => {
+    await fetch(`/api/conversations/${conversationId}/end`, { method: 'POST' });
+    setMessages([]);
+    localStorage.removeItem('visitorId');
+    localStorage.removeItem('conversationId');
+    localStorage.removeItem('threadId');
+    onEnd();
+  };
 
   useEffect(() => {
     if (threadId && messages.length === 0 && visitorId) {
@@ -175,7 +146,7 @@ const Chat: React.FC<ChatProps> = ({ visitorId }) => {
         sendMessage(intro);
       }
     }
-  }, [threadId, messages.length, visitorId, sendMessage]);
+  }, [conversationId, messages.length, visitorId, sendMessage]);
 
   const handleFeedback = async (messageId: string, isPositive: boolean) => {
     if (feedbackGiven.has(messageId)) return;
@@ -249,6 +220,9 @@ const Chat: React.FC<ChatProps> = ({ visitorId }) => {
           Enviar
         </button>
       </form>
+      <button onClick={endConversation} className={styles.endButton}>
+        Encerrar Conversa
+      </button>
     </div>
   );
 };
