@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-
-const prisma = new PrismaClient();
+import { endConversation } from '@/server/services/chatService';
 
 const bodySchema = z.object({
   conversationId: z.string().uuid(),
@@ -21,10 +19,7 @@ export async function POST(req: Request) {
 
   try {
     const { conversationId } = result.data;
-    await prisma.conversation.update({
-      where: { id: conversationId },
-      data: { status: 'CLOSED', endedAt: new Date() },
-    });
+    await endConversation(conversationId);
 
     console.log('Conversation ended', conversationId);
 
@@ -38,7 +33,5 @@ export async function POST(req: Request) {
       { success: false, data: null, message: 'Erro ao encerrar conversa', errors: [String(error)] },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

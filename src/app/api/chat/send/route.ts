@@ -1,10 +1,6 @@
-import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { sendToAssistant } from '@/server/services/chatService';
-import { openai } from "@/server/utils/openai";
-
-const prisma = new PrismaClient();
+import { sendMessage } from '@/server/services/chatService';
 
 const bodySchema = z.object({
   conversationId: z.string().uuid(),
@@ -25,26 +21,7 @@ export async function POST(req: Request) {
   const { conversationId, content } = result.data;
 
   try {
-    const conversation = await prisma.conversation.findUnique({ where: { id: conversationId } });
-    if (!conversation || conversation.status !== 'OPEN') {
-      return NextResponse.json(
-        { success: false, data: null, message: 'Conversa não encontrada ou encerrada', errors: [] },
-        { status: 400 }
-      );
-    }
-
-    await prisma.message.create({ data: { conversationId, role: 'USER', content } });
-
-    let threadId = conversation.threadId;
-    if (!threadId) {
-      const thread = await openai.beta.threads.create();
-      threadId = thread.id;
-      await prisma.conversation.update({ where: { id: conversationId }, data: { threadId } });
-    }
-
-    const assistantText = await sendToAssistant(threadId, content);
-
-    await prisma.message.create({ data: { conversationId, role: 'ASSISTANT', content: assistantText } });
+    const assistantText = await sendMessage(conversationId, content);
 
     console.log('Message exchanged on conversation', conversationId);
 
@@ -58,7 +35,5 @@ export async function POST(req: Request) {
       { success: false, data: null, message: 'Erro ao enviar mensagem', errors: [String(error)] },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

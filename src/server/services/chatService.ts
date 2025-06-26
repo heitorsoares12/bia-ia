@@ -1,31 +1,81 @@
-import { openai } from "@/server/utils/openai";
-import { assistantId } from "@/server/config/assistant";
+import { prisma } from '@/server/utils/prisma';
+import { Prisma } from '@prisma/client';
+import { getAssistantResponse, createThread } from './openaiService';
 
-export async function sendToAssistant(threadId: string, content: string): Promise<string> {
-  const messagePromise = openai.beta.threads.messages.create(threadId, {
-    role: "user",
-    content,
-  });
+interface VisitorData {
+  nome: string;
+  email: string;
+  cnpj?: string;
+  cargo?: string;
+  areaAtuacao?: string;
+  interesse?: string;
+}
 
-  const timeoutPromise = new Promise((_, reject) => {
-    setTimeout(() => reject(new Error("Timeout ao enviar mensagem")), 10000);
-  });
-
-  await Promise.race([messagePromise, timeoutPromise]);
-
-  const stream = await openai.beta.threads.runs.stream(threadId, {
-    assistant_id: assistantId,
-  });
-
-  let assistantText = "";
-
-  await new Promise<void>((resolve, reject) => {
-    stream.on("textDelta", (delta) => {
-      if (delta.value) assistantText += delta.value;
+export async function startConversation(data: VisitorData) {
+  let visitor = await prisma.visitor.findUnique({ where: { email: data.email } });
+  if (!visitor) {
+    visitor = await prisma.visitor.create({
+      data: data as Prisma.VisitorUncheckedCreateInput,
     });
-    stream.on("end", () => resolve());
-    stream.on("error", (err) => reject(err));
+  }
+
+  const conversation = await prisma.conversation.create({
+    data: {
+      visitorId: visitor.id,
+      status: 'OPEN',
+      startedAt: new Date(),
+    },
+  });
+
+  return { conversationId: conversation.id };
+}
+
+export async function sendMessage(conversationId: string, content: string) {
+  const conversation = await prisma.conversation.findUnique({ where: { id: conversationId } });
+  if (!conversation || conversation.status !== 'OPEN') {
+    throw new Error('Conversa não encontrada ou encerrada');
+  }
+
+  await prisma.message.create({
+    data: {
+      conversationId,
+      role: 'USER',
+      content,
+    } as Prisma.MessageUncheckedCreateInput,
+  });
+
+  let threadId = conversation.threadId;
+  if (!threadId) {
+    threadId = await createThread();
+    await prisma.conversation.update({ where: { id: conversationId }, data: { threadId } });
+  }
+
+  const assistantText = await getAssistantResponse(threadId, content);
+
+  await prisma.message.create({
+    data: {
+      conversationId,
+      role: 'ASSISTANT',
+      content: assistantText,
+    } as Prisma.MessageUncheckedCreateInput,
   });
 
   return assistantText;
+}
+
+export async function endConversation(conversationId: string) {
+  await prisma.conversation.update({
+    where: { id: conversationId },
+    data: { status: 'CLOSED', endedAt: new Date() },
+  });
+}
+
+export async function fetchConversation(id: string) {
+  return prisma.conversation.findUnique({
+    where: { id },
+    include: {
+      visitor: true,
+      messages: { orderBy: { timestamp: 'asc' } as Record<string, unknown> },
+    },
+  });
 }

@@ -44,6 +44,7 @@ model Conversation {
   messages   Message[]
 
   @@index([visitorId])
+  @@index([createdAt])
 }
 
 model Message {
@@ -55,6 +56,7 @@ model Message {
   conversation   Conversation @relation(fields: [conversationId], references: [id])
 
   @@index([conversationId])
+  @@index([timestamp])
 }
 
 model User {

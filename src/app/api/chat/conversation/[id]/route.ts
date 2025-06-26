@@ -1,17 +1,9 @@
-import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
-
-const prisma = new PrismaClient();
+import { fetchConversation } from '@/server/services/chatService';
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   try {
-    const conversation = await prisma.conversation.findUnique({
-      where: { id: params.id },
-      include: {
-        visitor: true,
-        messages: { orderBy: { timestamp: 'asc' } },
-      },
-    });
+    const conversation = await fetchConversation(params.id);
 
     if (!conversation) {
       return NextResponse.json(
@@ -30,7 +22,5 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
       { success: false, data: null, message: 'Erro ao buscar conversa', errors: [String(error)] },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
