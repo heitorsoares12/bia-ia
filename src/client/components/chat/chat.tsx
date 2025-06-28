@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useDebouncedCallback } from "use-debounce";
 import styles from "./chat.module.css";
 import Markdown from "react-markdown";
@@ -35,7 +36,10 @@ const AssistantMessage = React.memo(function AssistantMessage({
       <Markdown
         components={{
           html: (props) => {
-            const clean = sanitize(String(props.children[0]), {
+            const child = Array.isArray(props.children)
+              ? props.children[0]
+              : props.children;
+            const clean = sanitize(String(child ?? ""), {
               allowedTags: ["b", "i", "em", "strong", "a", "code", "pre"],
               allowedAttributes: { a: ["href", "target"] },
             });
@@ -77,6 +81,8 @@ const Chat: React.FC = () => {
   const [userInput, setUserInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversationEnded, setConversationEnded] = useState(false);
+  const router = useRouter();
   const [locale, setLocale] = useState<keyof typeof translations>("pt-BR");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const visitorDataRef = useRef<VisitorData | null>(null);
@@ -227,7 +233,9 @@ const Chat: React.FC = () => {
   );
 
   const endConversation = async () => {
-    if (!conversationId) return;
+    if (!conversationId || conversationEnded) return;
+    const confirm = window.confirm("Deseja encerrar a conversa?");
+    if (!confirm) return;
     try {
       await fetch("/api/chat/end", {
         method: "POST",
@@ -243,9 +251,19 @@ const Chat: React.FC = () => {
           timestamp: Date.now(),
         },
       ]);
+      setConversationEnded(true);
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const restartConversation = () => {
+    localStorage.removeItem("conversationId");
+    localStorage.removeItem("chatMessages");
+    setConversationId(null);
+    setMessages([]);
+    setConversationEnded(false);
+    router.push("/");
   };
 
   useEffect(() => {
@@ -347,13 +365,23 @@ const Chat: React.FC = () => {
         </button>
       </form>
 
-      <button
-        onClick={endConversation}
-        className={styles.endButton}
-        aria-label="Encerrar conversa"
-      >
-        Encerrar Conversa
-      </button>
+      {conversationEnded ? (
+        <button
+          onClick={restartConversation}
+          className={styles.restartButton}
+          aria-label="Iniciar nova conversa"
+        >
+          Iniciar Nova Conversa
+        </button>
+      ) : (
+        <button
+          onClick={endConversation}
+          className={styles.endButton}
+          aria-label="Encerrar conversa"
+        >
+          Encerrar Conversa
+        </button>
+      )}
     </div>
   );
 };

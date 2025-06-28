@@ -6,6 +6,26 @@
     "Fira Mono", "Droid Sans Mono", "Courier New", monospace;
 }
 
+* Theme colors */
+:root {
+  --primary: #007bff;
+  --secondary: #6c757d;
+  --success: #28a745;
+  --danger: #dc3545;
+  --light: #f8f9fa;
+  --dark: #343a40;
+  --background: #ffffff;
+  --text: #212529;
+  --message-bg: #ffffff;
+}
+
+[data-theme="dark"] {
+  --background: #212529;
+  --text: #f1f3f5;
+  --message-bg: #343a40;
+}
+
+
 * {
   box-sizing: border-box;
   padding: 0;
