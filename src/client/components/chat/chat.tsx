@@ -36,7 +36,7 @@ const Message = ({ role, text }: ChatMessage) => {
 };
 
 const LoadingIndicator = () => (
-  <div className={styles.loadingIndicator}>digitando...</div>
+  <div className={styles.loadingIndicator}>pensando...</div>
 );
 
 const Chat: React.FC = () => {
@@ -46,37 +46,16 @@ const Chat: React.FC = () => {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const visitorDataRef = useRef<VisitorData | null>(null);
+  const initRef = useRef(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
-
-  const fetchHistory = useCallback(async (id: string) => {
-    try {
-      const res = await fetch(`/api/chat/conversation/${id}`);
-      if (!res.ok) throw new Error("Falha ao buscar conversa");
-      const json = await res.json();
-      const conv = json.data;
-      const mapped: ChatMessage[] = conv.messages.map((m: {
-        id: string;
-        role: string;
-        content: string;
-        timestamp: string;
-      }) => ({
-        id: m.id,
-        role: m.role.toLowerCase(),
-        text: m.content,
-        timestamp: new Date(m.timestamp).getTime(),
-      }));
-      setMessages(mapped);
-    } catch (err) {
-      console.error(err);
-    }
-  }, []);
+  }, [messages, scrollToBottom]);
 
   const sendMessage = useCallback(
     async (content: string, id?: string, showUser: boolean = true) => {
@@ -103,7 +82,12 @@ const Chat: React.FC = () => {
         const assistantId = crypto.randomUUID();
         setMessages((prev) => [
           ...prev,
-          { id: assistantId, role: "assistant", text: json.data.message, timestamp: Date.now() },
+          { 
+            id: assistantId, 
+            role: "assistant", 
+            text: json.data.message, 
+            timestamp: Date.now() 
+          },
         ]);
       } catch (err) {
         console.error(err);
@@ -146,6 +130,44 @@ const Chat: React.FC = () => {
     }
   }, [greetVisitor]);
 
+  const fetchHistory = useCallback(
+    async (id: string) => {
+      try {
+        const res = await fetch(`/api/chat/conversation/${id}`);
+        if (!res.ok) throw new Error("Falha ao buscar conversa");
+        const json = await res.json();
+        const conv = json.data;
+        const mapped: ChatMessage[] = conv.messages
+          .filter(
+            (m: { role: string; content: string }, index: number) =>
+              index !== 0 ||
+              m.role !== "USER" ||
+              !m.content.includes("Cumprimente-o pelo nome")
+          )
+          .map((m: {
+            id: string;
+            role: string;
+            content: string;
+            timestamp: string;
+          }) => ({
+            id: m.id,
+            role: m.role.toLowerCase(),
+            text: m.content,
+            timestamp: new Date(m.timestamp).getTime(),
+          }));
+        setMessages(mapped);
+      } catch (err) {
+        console.error(err);
+        setConversationId(null);
+        localStorage.removeItem("conversationId");
+        if (visitorDataRef.current) {
+          startConversation(visitorDataRef.current);
+        }
+      }
+    },
+    [startConversation]
+  );
+
   const endConversation = async () => {
     if (!conversationId) return;
     try {
@@ -159,7 +181,7 @@ const Chat: React.FC = () => {
         {
           id: crypto.randomUUID(),
           role: "assistant",
-          text: "Conversa encerrada. Se precisar, estamos à disposição!",
+          text: "Conversa encerrada. Se precisar de mais ajuda, estamos à disposição! 😊",
           timestamp: Date.now(),
         },
       ]);
@@ -169,6 +191,9 @@ const Chat: React.FC = () => {
   };
 
   useEffect(() => {
+    if (initRef.current) return;
+    initRef.current = true;
+
     const storedVisitor = localStorage.getItem("visitorData");
     const storedConv = localStorage.getItem("conversationId");
     if (storedVisitor) {
@@ -189,10 +214,16 @@ const Chat: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!userInput.trim() || !conversationId) return;
+    if (!userInput.trim() || !conversationId || isLoading) return;
     sendMessage(userInput);
     setUserInput("");
   };
+
+  // Foco automático no input ao carregar
+  useEffect(() => {
+    const input = document.querySelector(`.${styles.input}`) as HTMLInputElement;
+    input?.focus();
+  }, []);
 
   return (
     <div className={styles.chatContainer}>
@@ -205,7 +236,12 @@ const Chat: React.FC = () => {
         {isLoading && <LoadingIndicator />}
         <div ref={messagesEndRef} />
       </div>
-      <form onSubmit={handleSubmit} className={styles.inputForm}>
+      
+      <form 
+        ref={formRef}
+        onSubmit={handleSubmit} 
+        className={styles.inputForm}
+      >
         <input
           type="text"
           value={userInput}
@@ -213,12 +249,23 @@ const Chat: React.FC = () => {
           disabled={isLoading}
           placeholder={isLoading ? "Aguarde a resposta..." : "Digite sua mensagem..."}
           className={styles.input}
+          aria-label="Digite sua mensagem"
         />
-        <button type="submit" disabled={isLoading || !userInput.trim()} className={styles.sendButton}>
+        <button 
+          type="submit" 
+          disabled={isLoading || !userInput.trim()} 
+          className={styles.sendButton}
+          aria-label="Enviar mensagem"
+        >
           Enviar
         </button>
       </form>
-      <button onClick={endConversation} className={styles.endButton}>
+      
+      <button 
+        onClick={endConversation} 
+        className={styles.endButton}
+        aria-label="Encerrar conversa"
+      >
         Encerrar Conversa
       </button>
     </div>
