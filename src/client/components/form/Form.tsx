@@ -190,7 +190,9 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
         nome: data.nome,
         email: data.email,
         cnpj: data.cnpj,
-        consentimento: data.lgpdConsent,
+        cargo: data.cargo,
+        areaAtuacao: data.area,
+        interesse: data.interesse,
       };
 
       const res = await fetch("/api/visitor", {
@@ -204,6 +206,8 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
         "visitorData",
         JSON.stringify({
           nome: data.nome,
+          email: data.email,
+          cnpj: data.cnpj,
           cargo: data.cargo,
           area: data.area,
           interesse: data.interesse,
