@@ -6,9 +6,10 @@ const prisma = new PrismaClient();
 interface RequestBody {
   nome?: string;
   email?: string;
-  telefone?: string;
   cnpj?: string;
-  consentimento?: boolean;
+  cargo?: string;
+  areaAtuacao?: string;
+  interesse?: string;
 }
 
 export async function POST(req: Request) {
@@ -24,12 +25,13 @@ export async function POST(req: Request) {
   try {
     const visitor = await prisma.visitor.create({
       data: {
-        nome: data.nome,
-        email: data.email,
-        telefone: data.telefone ?? '0000000000',
+        nome: data.nome!,
+        email: data.email!,
         cnpj: data.cnpj ?? '00000000000000',
-        consentimento: data.consentimento ?? true
-      }
+        cargo: data.cargo ?? null,
+        areaAtuacao: data.areaAtuacao ?? null,
+        interesse: data.interesse ?? null,
+      },
     });
 
     return NextResponse.json({ visitorId: visitor.id }, { status: 200 });
