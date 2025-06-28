@@ -71,21 +71,21 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     mode: "onBlur",
-    // defaultValues: {
-    //   lgpdConsent: false,
-    // },
     defaultValues: {
-      nome: "Fulano Teste",
-      email: `teste${Math.floor(Math.random() * 10000)}@exemplo.com`,
-      cnpj: "52561214000130",
-      empresa: "Empresa Teste",
-      cargo: "comprador",
-      cargoOutro: "",
-      area: "construcaoCivil",
-      areaOutro: "",
-      interesse: "produto",
-      lgpdConsent: true,
+      lgpdConsent: false,
     },
+    // defaultValues: {
+    //   nome: "Fulano Teste",
+    //   email: `teste${Math.floor(Math.random() * 10000)}@exemplo.com`,
+    //   cnpj: "52561214000130",
+    //   empresa: "Empresa Teste",
+    //   cargo: "comprador",
+    //   cargoOutro: "",
+    //   area: "construcaoCivil",
+    //   areaOutro: "",
+    //   interesse: "produto",
+    //   lgpdConsent: true,
+    // },
   });
 
   useEffect(() => {

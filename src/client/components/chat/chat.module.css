@@ -199,6 +199,119 @@
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+.confirmDialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  text-align: center;
+  width: 90%;
+  max-width: 400px;
+}
+
+.dialogHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.warningIcon {
+  font-size: 2rem;
+}
+
+.dialogButtons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.cancelButton,
+.confirmButton {
+  padding: 0.75rem 1.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.cancelButton {
+  background-color: #f1f3f5;
+  border: 1px solid #dee2e6;
+}
+
+.cancelButton:hover {
+  background-color: #e9ecef;
+}
+
+.confirmButton {
+  background-color: #ff6b6b;
+  color: white;
+  border: none;
+}
+
+.confirmButton:hover {
+  background-color: #ff5252;
+}
+
+.topActions {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 20;
+}
+
+.endIconButton,
+.restartIconButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.endIconButton {
+  background-color: #ff6b6b;
+  color: white;
+}
+
+.restartIconButton {
+  background-color: #4dabf7;
+  color: white;
+}
+
+.endIconButton:hover {
+  background-color: #ff5252;
+  transform: scale(1.1);
+}
+
+.restartIconButton:hover {
+  background-color: #339af0;
+  transform: scale(1.1);
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

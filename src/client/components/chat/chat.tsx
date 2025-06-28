@@ -71,10 +71,8 @@ const LoadingIndicator = ({ text }: { text: string }) => (
   <div className={styles.loadingIndicator}>{text}</div>
 );
 
-const translations = {
-  "pt-BR": { thinking: "pensando...", placeholder: "Digite sua mensagem..." },
-  "en-US": { thinking: "thinking...", placeholder: "Type your message..." },
-};
+const thinking = "pensando...";
+const placeholder = "Digite sua mensagem...";
 
 const Chat: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -83,7 +81,7 @@ const Chat: React.FC = () => {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [conversationEnded, setConversationEnded] = useState(false);
   const router = useRouter();
-  const [locale, setLocale] = useState<keyof typeof translations>("pt-BR");
+  const [showEndDialog, setShowEndDialog] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const visitorDataRef = useRef<VisitorData | null>(null);
   const initRef = useRef(false);
@@ -232,10 +230,11 @@ const Chat: React.FC = () => {
     [startConversation]
   );
 
-  const endConversation = async () => {
+  const requestEndConversation = () => setShowEndDialog(true);
+
+
+  const handleConfirmEnd = async () => {
     if (!conversationId || conversationEnded) return;
-    const confirm = window.confirm("Deseja encerrar a conversa?");
-    if (!confirm) return;
     try {
       await fetch("/api/chat/end", {
         method: "POST",
@@ -254,6 +253,8 @@ const Chat: React.FC = () => {
       setConversationEnded(true);
     } catch (err) {
       console.error(err);
+    } finally {
+      setShowEndDialog(false);
     }
   };
 
@@ -308,8 +309,6 @@ const Chat: React.FC = () => {
     input?.focus();
   }, []);
 
-  const { thinking, placeholder } = translations[locale];
-
   return (
     <div
       className={styles.chatContainer}
@@ -322,14 +321,45 @@ const Chat: React.FC = () => {
           restabelecida.
         </div>
       )}
-      <select
-        value={locale}
-        onChange={(e) => setLocale(e.target.value as keyof typeof translations)}
-        className={styles.localeSelector}
-      >
-        <option value="pt-BR">Português</option>
-        <option value="en-US">English</option>
-      </select>
+      <div className={styles.topActions}>
+        <button
+          onClick={conversationEnded ? restartConversation : requestEndConversation}
+          className={
+            conversationEnded ? styles.restartIconButton : styles.endIconButton
+          }
+          aria-label={
+            conversationEnded ? "Iniciar nova conversa" : "Encerrar conversa"
+          }
+        >
+          {conversationEnded ? "↻" : "✕"}
+        </button>
+      </div>
+      {showEndDialog && (
+        <>
+          <div className={styles.overlay} />
+          <div className={styles.confirmDialog}>
+            <div className={styles.dialogHeader}>
+              <span className={styles.warningIcon}>⚠️</span>
+              <h3>Encerrar conversa</h3>
+            </div>
+            <p>Tem certeza que deseja encerrar esta conversa?</p>
+            <div className={styles.dialogButtons}>
+              <button
+                className={styles.cancelButton}
+                onClick={() => setShowEndDialog(false)}
+              >
+                Cancelar
+              </button>
+              <button
+                className={styles.confirmButton}
+                onClick={handleConfirmEnd}
+              >
+                Encerrar
+              </button>
+            </div>
+          </div>
+        </>
+      )}
       <div
         className={styles.messagesContainer}
         aria-live="polite"
@@ -350,14 +380,14 @@ const Chat: React.FC = () => {
           type="text"
           value={userInput}
           onChange={(e) => setUserInput(e.target.value)}
-          disabled={isLoading || !isOnline}
+          disabled={isLoading || !isOnline || conversationEnded}
           placeholder={isLoading ? "Aguarde a resposta..." : placeholder}
           className={styles.input}
           aria-label="Digite sua mensagem"
         />
         <button
           type="submit"
-          disabled={isLoading || !userInput.trim() || !isOnline}
+          disabled={isLoading || !userInput.trim() || !isOnline || conversationEnded}
           className={styles.sendButton}
           aria-label="Enviar mensagem"
         >
@@ -365,23 +395,6 @@ const Chat: React.FC = () => {
         </button>
       </form>
 
-      {conversationEnded ? (
-        <button
-          onClick={restartConversation}
-          className={styles.restartButton}
-          aria-label="Iniciar nova conversa"
-        >
-          Iniciar Nova Conversa
-        </button>
-      ) : (
-        <button
-          onClick={endConversation}
-          className={styles.endButton}
-          aria-label="Encerrar conversa"
-        >
-          Encerrar Conversa
-        </button>
-      )}
     </div>
   );
 };
