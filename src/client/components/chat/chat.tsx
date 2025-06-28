@@ -155,8 +155,27 @@ const Chat: React.FC = () => {
   const greetVisitor = useCallback(
     async (visitor: VisitorData, id: string) => {
       if (!visitor.nome) return;
-      const { nome, cargo, area, interesse } = visitor;
-      const intro = `O visitante se chama ${nome}, atua em ${area} como ${cargo} e tem interesse em ${interesse}. Cumprimente-o pelo nome e ofereça ajuda.`;
+      const { nome, area, interesse } = visitor;
+      const intro = `## 🚀 **Prompt para a IA gerar a mensagem inicial do chat**
+        > O usuário preencheu um formulário com os seguintes dados:
+        >
+        > * **Área de atuação:** ${area}
+        > * **Interesse principal:** ${interesse}
+
+        Com base nessas informações, você deve:
+
+        1️⃣ Cumprimente o visitante chamado ${nome} de forma personalizada e acolhedora, usando o contexto da área de atuação dele.
+        2️⃣ Apresente uma lista inicial de soluções ou produtos diretamente relacionados à área e ao interesse dele.
+        3️⃣ Seja direto, útil e proativo. Não apenas cumprimente — já ofereça informações práticas.
+        4️⃣ Caso o interesse seja "conhecer produtos", apresente os principais produtos disponíveis na área informada (exemplo: se área = automotivo, mostre produtos automotivos).
+        5️⃣ Se o interesse for outro, adapte a mensagem para oferecer informações relevantes ou opções de ajuda.
+
+        O tom deve ser **técnico, amigável e objetivo**, como um consultor que realmente entende do assunto.
+
+        Exemplo esperado:
+        "Olá, seja bem-vindo! Vejo que você atua no setor automotivo e tem interesse em conhecer nossos produtos. Aqui estão algumas opções recomendadas para você:"
+      `;
+
       await sendMessage(intro, id, false);
     },
     [sendMessage]
@@ -231,7 +250,6 @@ const Chat: React.FC = () => {
   );
 
   const requestEndConversation = () => setShowEndDialog(true);
-
 
   const handleConfirmEnd = async () => {
     if (!conversationId || conversationEnded) return;
@@ -323,7 +341,9 @@ const Chat: React.FC = () => {
       )}
       <div className={styles.topActions}>
         <button
-          onClick={conversationEnded ? restartConversation : requestEndConversation}
+          onClick={
+            conversationEnded ? restartConversation : requestEndConversation
+          }
           className={
             conversationEnded ? styles.restartIconButton : styles.endIconButton
           }
@@ -387,14 +407,15 @@ const Chat: React.FC = () => {
         />
         <button
           type="submit"
-          disabled={isLoading || !userInput.trim() || !isOnline || conversationEnded}
+          disabled={
+            isLoading || !userInput.trim() || !isOnline || conversationEnded
+          }
           className={styles.sendButton}
           aria-label="Enviar mensagem"
         >
           Enviar
         </button>
       </form>
-
     </div>
   );
 };
