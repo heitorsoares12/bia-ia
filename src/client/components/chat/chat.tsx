@@ -1,19 +1,18 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import styles from "./chat.module.css";
 import Markdown from "react-markdown";
-import { useAssistantStream } from "@/client/hooks/useAssistantStream";
 import { ChatMessage } from "@/shared/types/chat";
-import { FeedbackButtons } from "../FeedbackButtons/FeedbackButtons";
-import { AssistantStream } from "openai/lib/AssistantStream";
 
-const ErrorMessage = ({ message, show }: { message: string; show: boolean }) => 
-  show ? <div className={styles.errorMessage}>{message}</div> : null;
-
-const LoadingIndicator = () => {
-  return <div className={styles.loadingIndicator}>Pensando...</div>;
-};
+interface VisitorData {
+  nome?: string;
+  email?: string;
+  cnpj?: string;
+  cargo?: string;
+  area?: string;
+  interesse?: string;
+}
 
 const UserMessage = ({ text }: { text: string }) => (
   <div className={styles.userMessage}>{text}</div>
@@ -27,228 +26,201 @@ const AssistantMessage = ({ text }: { text: string }) => (
 
 const Message = ({ role, text }: ChatMessage) => {
   switch (role) {
-    case "user": return <UserMessage text={text} />;
-    case "assistant": return <AssistantMessage text={text} />;
-    default: return null;
+    case "user":
+      return <UserMessage text={text} />;
+    case "assistant":
+      return <AssistantMessage text={text} />;
+    default:
+      return null;
   }
 };
 
-interface ChatProps {
-  visitorId: string;
-}
+const LoadingIndicator = () => (
+  <div className={styles.loadingIndicator}>digitando...</div>
+);
 
-export interface VisitorData {
-  nome?: string;
-  cargo?: string;
-  area?: string;
-  interesse?: string;
-  email?: string;
-  telefone?: string;
-  cnpj?: string;
-  consentimento?: boolean;
-}
-
-const Chat: React.FC<ChatProps> = ({ visitorId }) => {
+const Chat: React.FC = () => {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [userInput, setUserInput] = useState("");
-  const [inputDisabled, setInputDisabled] = useState(false);
-  const [threadId, setThreadId] = useState("");
-  const [feedbackGiven, setFeedbackGiven] = useState<Set<string>>(new Set());
-  const [visitorData, setVisitorData] = useState<VisitorData | null>(null);
-  const visitorDataRef = useRef<VisitorData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-
-  const { 
-    messages, 
-    setMessages, 
-    isLoading, 
-    setIsLoading, 
-    error, 
-    setError, 
-    handleReadableStream 
-  } = useAssistantStream();
+  const visitorDataRef = useRef<VisitorData | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const createThread = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/assistants/threads`, { method: "POST" });
-      if (!res.ok) throw new Error("Falha ao criar thread");
-      const data = await res.json();
-      setThreadId(data.threadId);
-    } catch {
-      setError({
-        message: "Erro ao iniciar conversa. Por favor, tente novamente.",
-        show: true
-      });
-    }
-  }, [setError]);
-
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  useEffect(() => {
-    const savedMessages = localStorage.getItem("chatMessages");
-    const savedThreadId = localStorage.getItem("threadId");
-    
-    if (savedMessages) {
-      setMessages(JSON.parse(savedMessages));
-    }
-    
-    if (savedThreadId) {
-      setThreadId(savedThreadId);
-    } else {
-      createThread();
-    }
-  }, [setMessages, createThread]);
-
-  useEffect(() => {
-    const stored = localStorage.getItem("visitorData");
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      setVisitorData(parsed);
-      visitorDataRef.current = parsed;
+  const fetchHistory = useCallback(async (id: string) => {
+    try {
+      const res = await fetch(`/api/chat/conversation/${id}`);
+      if (!res.ok) throw new Error("Falha ao buscar conversa");
+      const json = await res.json();
+      const conv = json.data;
+      const mapped: ChatMessage[] = conv.messages.map((m: {
+        id: string;
+        role: string;
+        content: string;
+        timestamp: string;
+      }) => ({
+        id: m.id,
+        role: m.role.toLowerCase(),
+        text: m.content,
+        timestamp: new Date(m.timestamp).getTime(),
+      }));
+      setMessages(mapped);
+    } catch (err) {
+      console.error(err);
     }
   }, []);
 
+  const sendMessage = useCallback(
+    async (content: string, id?: string, showUser: boolean = true) => {
+      const convId = id || conversationId;
+      if (!convId) return;
+
+      if (showUser) {
+        const userId = crypto.randomUUID();
+        setMessages((prev) => [
+          ...prev,
+          { id: userId, role: "user", text: content, timestamp: Date.now() },
+        ]);
+      }
+
+      setIsLoading(true);
+      try {
+        const res = await fetch("/api/chat/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ conversationId: convId, content }),
+        });
+        if (!res.ok) throw new Error("Erro ao enviar mensagem");
+        const json = await res.json();
+        const assistantId = crypto.randomUUID();
+        setMessages((prev) => [
+          ...prev,
+          { id: assistantId, role: "assistant", text: json.data.message, timestamp: Date.now() },
+        ]);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [conversationId]
+  );
+
+  const greetVisitor = useCallback(async (visitor: VisitorData, id: string) => {
+    if (!visitor.nome) return;
+    const { nome, cargo, area, interesse } = visitor;
+    const intro = `O visitante se chama ${nome}, atua em ${area} como ${cargo} e tem interesse em ${interesse}. Cumprimente-o pelo nome e ofereça ajuda.`;
+    await sendMessage(intro, id, false);
+  }, [sendMessage]);
+
+  const startConversation = useCallback(async (visitor: VisitorData) => {
+    try {
+      const res = await fetch("/api/chat/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nome: visitor.nome,
+          email: visitor.email,
+          cnpj: visitor.cnpj,
+          cargo: visitor.cargo,
+          areaAtuacao: visitor.area,
+          interesse: visitor.interesse,
+        }),
+      });
+      if (!res.ok) throw new Error("Falha ao iniciar conversa");
+      const json = await res.json();
+      const id = json.data.conversationId as string;
+      setConversationId(id);
+      localStorage.setItem("conversationId", id);
+      greetVisitor(visitor, id);
+    } catch (err) {
+      console.error(err);
+    }
+  }, [greetVisitor]);
+
+  const endConversation = async () => {
+    if (!conversationId) return;
+    try {
+      await fetch("/api/chat/end", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conversationId }),
+      });
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          text: "Conversa encerrada. Se precisar, estamos à disposição!",
+          timestamp: Date.now(),
+        },
+      ]);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
-    visitorDataRef.current = visitorData;
-  }, [visitorData]);
+    const storedVisitor = localStorage.getItem("visitorData");
+    const storedConv = localStorage.getItem("conversationId");
+    if (storedVisitor) {
+      const visitor = JSON.parse(storedVisitor) as VisitorData;
+      visitorDataRef.current = visitor;
+      if (storedConv) {
+        setConversationId(storedConv);
+        fetchHistory(storedConv);
+      } else {
+        startConversation(visitor);
+      }
+    }
+  }, [fetchHistory, startConversation]);
 
   useEffect(() => {
     localStorage.setItem("chatMessages", JSON.stringify(messages));
   }, [messages]);
 
-  useEffect(() => {
-    if (threadId) {
-      localStorage.setItem("threadId", threadId);
-    }
-  }, [threadId]);
-
-  const sendMessage = useCallback(async (text: string) => {
-    setIsLoading(true);
-    setError({ message: "", show: false });
-
-    try {
-      const response = await fetch(
-        `/api/assistants/threads/${threadId}/messages`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            content: text,
-            visitorId: Number(visitorId),
-            visitorData: visitorDataRef.current,
-          }),
-        }
-      );
-
-      if (!response.ok) throw new Error("Falha ao enviar mensagem");
-      
-      if (response.body) {
-        const stream = AssistantStream.fromReadableStream(response.body);
-        handleReadableStream(stream);
-      } else {
-        throw new Error("Resposta vazia do servidor");
-      }
-    } catch {
-      setError({
-        message: "Erro ao enviar mensagem. Por favor, tente novamente.",
-        show: true
-      });
-      setInputDisabled(false);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [threadId, visitorId, handleReadableStream, setError, setIsLoading]);
-
-  useEffect(() => {
-    if (threadId && messages.length === 0 && visitorId) {
-      const data = localStorage.getItem("visitorData");
-      if (data) {
-        const parsed = JSON.parse(data);
-        setVisitorData(parsed);
-        visitorDataRef.current = parsed;
-        const { nome, cargo, area, interesse } = parsed;
-        const intro = `O visitante se chama ${nome}, atua em ${area} como ${cargo} e tem interesse em ${interesse}. Cumprimente-o pelo nome e ofere\u00e7a ajuda.`;
-        sendMessage(intro);
-      }
-    }
-  }, [threadId, messages.length, visitorId, sendMessage]);
-
-  const handleFeedback = async (messageId: string, isPositive: boolean) => {
-    if (feedbackGiven.has(messageId)) return;
-    
-    try {
-      await fetch(`/api/feedback`, {
-        method: "POST",
-        body: JSON.stringify({ threadId, messageId, isPositive }),
-      });
-      
-      setFeedbackGiven(prev => new Set(prev).add(messageId));
-    } catch (err) {
-      console.error("Erro ao enviar feedback:", err);
-    }
-  };
-
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!userInput.trim() || isLoading) return;
-    
-    const userMessageId = crypto.randomUUID();
-    setMessages(prev => [
-      ...prev,
-      { id: userMessageId, role: "user", text: userInput, timestamp: Date.now() },
-    ]);
-    
-    setUserInput("");
-    setInputDisabled(true);
+    if (!userInput.trim() || !conversationId) return;
     sendMessage(userInput);
+    setUserInput("");
   };
 
- return (
+  return (
     <div className={styles.chatContainer}>
-      <div 
-        className={styles.messagesContainer} 
-        aria-live="polite"
-      >
-        {messages.map((message) => (
-          <div key={message.id} className={styles.messageWrapper}>
-            <Message {...message} />
-            {message.role === "assistant" && !feedbackGiven.has(message.id) && (
-              <FeedbackButtons 
-                onFeedback={(isPositive) => handleFeedback(message.id, isPositive)} 
-              />
-            )}
+      <div className={styles.messagesContainer} aria-live="polite">
+        {messages.map((m) => (
+          <div key={m.id} className={styles.messageWrapper}>
+            <Message {...m} />
           </div>
         ))}
         {isLoading && <LoadingIndicator />}
-        {error.show && <ErrorMessage message={error.message} show={error.show} />}
         <div ref={messagesEndRef} />
       </div>
-      
       <form onSubmit={handleSubmit} className={styles.inputForm}>
         <input
           type="text"
           value={userInput}
           onChange={(e) => setUserInput(e.target.value)}
-          disabled={inputDisabled || isLoading}
-          placeholder={inputDisabled || isLoading 
-            ? "Aguarde a resposta..." 
-            : "Digite sua mensagem..."
-          }
+          disabled={isLoading}
+          placeholder={isLoading ? "Aguarde a resposta..." : "Digite sua mensagem..."}
           className={styles.input}
         />
-        <button 
-          type="submit" 
-          disabled={inputDisabled || isLoading || !userInput.trim()} 
-          className={styles.sendButton}
-          aria-busy={isLoading}
-        >
+        <button type="submit" disabled={isLoading || !userInput.trim()} className={styles.sendButton}>
           Enviar
         </button>
       </form>
+      <button onClick={endConversation} className={styles.endButton}>
+        Encerrar Conversa
+      </button>
     </div>
   );
 };

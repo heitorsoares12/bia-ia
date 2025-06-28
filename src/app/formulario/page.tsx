@@ -6,16 +6,16 @@ import Chat from '@/client/components/chat/chat';
 import styles from "./page.module.css";
 
 export default function FormPage() {
-  const [visitorId, setVisitorId] = useState<string | null>(null);
+  const [formDone, setFormDone] = useState(false);
 
   return (
     <div>
-      {!visitorId ? (
-        <Form onSuccess={(id: string) => setVisitorId(id)} />
+      {!formDone ? (
+        <Form onSuccess={() => setFormDone(true)} />
       ) : (
         <main className={styles.main}>
           <div className={styles.container}>
-            <Chat visitorId={visitorId} />
+            <Chat />
           </div>
         </main>
       )}
