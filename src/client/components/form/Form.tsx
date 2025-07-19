@@ -4,10 +4,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import styles from "./Form.module.css";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import PrivacyModal from "../Modal/PrivacyModal/PrivacyModal";
 import { isValidCNPJ } from "@/client/utils/cnpj";
+import { UserIcon, BuildingIcon } from "./icons";
+import { FormField } from "./FormField";
+import { FormSection } from "./FormSection";
+import { useCnpjApi } from "@/client/hooks/useCnpjApi";
 
 const cargoOptions = [
   { value: "comprador", label: "Comprador" },
@@ -30,25 +34,57 @@ const areaOptions = [
   { value: "outros", label: "Outros" },
 ] as const;
 
-const formSchema = z.object({
-  nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-  email: z.string().email("E-mail inválido"),
-  cnpj: z
-    .string()
-    .min(14, "CNPJ deve ter 14 dígitos")
-    .refine((cnpj) => isValidCNPJ(cnpj), {
-      message: "CNPJ inválido",
+const formSchema = z
+  .object({
+    nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+    email: z.string().email("E-mail inválido"),
+    cnpj: z
+      .string()
+      .min(14, "CNPJ deve ter 14 dígitos")
+      .refine((cnpj) => isValidCNPJ(cnpj), {
+        message: "CNPJ inválido",
+      }),
+    empresa: z.string().min(2, "Empresa é obrigatória"),
+    cargo: z
+      .string({ required_error: "Por favor, selecione um cargo" })
+      .refine((val) => cargoOptions.some((opt) => opt.value === val), {
+        message: "Selecione um cargo válido",
+      }),
+    cargoOutro: z.string().optional(),
+    area: z
+      .string({ required_error: "Por favor, selecione uma área de atuação" })
+      .refine((val) => areaOptions.some((opt) => opt.value === val), {
+        message: "Selecione uma área válida",
+      }),
+    areaOutro: z.string().optional(),
+    interesse: z
+      .string({ required_error: "Selecione seu interesse principal" })
+      .refine(
+        (val) => ["produto", "servico", "parceria", "outro"].includes(val),
+        {
+          message: "Selecione um interesse válido",
+        }
+      ),
+    lgpdConsent: z.boolean().refine((val) => val, {
+      message: "Você deve consentir com a política de privacidade",
     }),
-  empresa: z.string().min(2, "Empresa é obrigatória"),
-  cargo: z.enum(cargoOptions.map((c) => c.value) as [string, ...string[]]),
-  cargoOutro: z.string().optional(),
-  area: z.enum(areaOptions.map((a) => a.value) as [string, ...string[]]),
-  areaOutro: z.string().optional(),
-  interesse: z.enum(["produto", "servico", "parceria", "outro"]),
-  lgpdConsent: z.boolean().refine((val) => val, {
-    message: "Você deve consentir com a política de privacidade",
-  }),
-});
+  })
+  .superRefine((data, ctx) => {
+    if (data.cargo === "outros" && !data.cargoOutro) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["cargoOutro"],
+        message: "Por favor, especifique o cargo.",
+      });
+    }
+    if (data.area === "outros" && !data.areaOutro) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["areaOutro"],
+        message: "Por favor, especifique a área.",
+      });
+    }
+  });
 
 type FormValues = z.infer<typeof formSchema>;
 
@@ -58,7 +94,6 @@ interface FormProps {
 
 export const Form: React.FC<FormProps> = ({ onSuccess }) => {
   const [cnpjValue, setCnpjValue] = useState("");
-  const [isFetching, setIsFetching] = useState(false);
   const [showPolicy, setShowPolicy] = useState(false);
 
   const {
@@ -73,38 +108,26 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
     mode: "onBlur",
     defaultValues: {
       lgpdConsent: false,
+      nome: "",
+      email: "",
+      cnpj: "",
+      empresa: "",
+      cargoOutro: "",
+      areaOutro: "",
     },
-    // defaultValues: {
-    //   nome: "Fulano Teste",
-    //   email: `teste${Math.floor(Math.random() * 10000)}@exemplo.com`,
-    //   cnpj: "52561214000130",
-    //   empresa: "Empresa Teste",
-    //   cargo: "comprador",
-    //   cargoOutro: "",
-    //   area: "construcaoCivil",
-    //   areaOutro: "",
-    //   interesse: "produto",
-    //   lgpdConsent: true,
-    // },
   });
 
-  useEffect(() => {
-    trigger(); // Dispara a validação de todos os campos
-  }, [trigger]);
+  const { isFetching, fetchCompanyData } = useCnpjApi<FormValues>(
+    setValue,
+    trigger
+  );
 
   useEffect(() => {
-  if (watch("cnpj")) {
-    setCnpjValue(formatCNPJ(watch("cnpj")));
-  }
-}, [watch]);
+    trigger();
+  }, [trigger]);
 
   const cargoSelected = watch("cargo");
   const areaSelected = watch("area");
-
-  const handleLgpdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setValue("lgpdConsent", e.target.checked);
-    trigger("lgpdConsent");
-  };
 
   const formatCNPJ = (value: string) => {
     const cleaned = value.replace(/\D/g, "");
@@ -119,61 +142,9 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
     }${match[4] ? "/" + match[4] : ""}${match[5] ? "-" + match[5] : ""}`;
   };
 
-  const fetchCompanyData = useCallback(
-    async (cnpj: string) => {
-      const cleanedCNPJ = cnpj.replace(/\D/g, "");
-      if (cleanedCNPJ.length !== 14) return;
-
-      setIsFetching(true);
-      const brasilApiUrl = `https://brasilapi.com.br/api/cnpj/v1/${cleanedCNPJ}`;
-      const cnpjWsUrl = `https://publica.cnpj.ws/cnpj/${cleanedCNPJ}`;
-
-      const fetchBrasilApi = async () => {
-        const response = await fetch(brasilApiUrl);
-        if (response.status === 429 || response.status >= 500) {
-          throw new Error("API overloaded");
-        }
-        const data = await response.json();
-        if (data.message || !data.nome_fantasia) {
-          throw new Error(data.message || "CNPJ não encontrado na BrasilAPI");
-        }
-        return data.nome_fantasia as string;
-      };
-
-      const fetchCnpjWs = async () => {
-        const response = await fetch(cnpjWsUrl);
-        if (!response.ok) {
-          throw new Error("Erro na segunda API");
-        }
-        const data = await response.json();
-        if (!data.estabelecimento?.nome_fantasia) {
-          throw new Error("CNPJ não encontrado");
-        }
-        return data.estabelecimento.nome_fantasia as string;
-      };
-
-      try {
-        const nomeFantasia = await Promise.any([
-          fetchBrasilApi(),
-          fetchCnpjWs(),
-        ]);
-        setValue("empresa", nomeFantasia);
-        trigger("empresa");
-        toast.success("Dados da empresa carregados!");
-      } catch (err) {
-        toast.error("Falha ao buscar CNPJ. Preencha manualmente.");
-        console.error("Falha ao buscar CNPJ:", err);
-      } finally {
-        setIsFetching(false);
-      }
-    },
-    [setValue, trigger]
-  );
-
   const handleCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatCNPJ(e.target.value);
     setCnpjValue(formatted);
-
     const cleanedValue = formatted.replace(/\D/g, "");
     setValue("cnpj", cleanedValue, { shouldValidate: true });
   };
@@ -190,9 +161,15 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
         nome: data.nome,
         email: data.email,
         cnpj: data.cnpj,
-        cargo: data.cargo,
-        areaAtuacao: data.area,
+        empresa: data.empresa,
+        cargo:
+          data.cargo === "outros" && data.cargoOutro
+            ? data.cargoOutro
+            : data.cargo,
+        areaAtuacao:
+          data.area === "outros" && data.areaOutro ? data.areaOutro : data.area,
         interesse: data.interesse,
+        lgpdConsent: data.lgpdConsent,
       };
 
       const res = await fetch("/api/visitor", {
@@ -200,22 +177,14 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+
       const result = await res.json();
-      if (!res.ok) throw new Error("Falha ao enviar");
-      localStorage.setItem(
-        "visitorData",
-        JSON.stringify({
-          nome: data.nome,
-          email: data.email,
-          cnpj: data.cnpj,
-          cargo: data.cargo,
-          area: data.area,
-          interesse: data.interesse,
-        })
-      );
+      if (!res.ok) throw new Error(result.error || "Falha ao enviar dados");
+
+      localStorage.setItem("visitorData", JSON.stringify(payload));
       onSuccess?.(result.visitorId);
-    } catch {
-      toast.error("Erro ao enviar dados");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao enviar dados");
     }
   };
 
@@ -228,130 +197,141 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
           style: {
             background: "#363636",
             color: "#fff",
-            borderRadius: "8px",
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+            borderRadius: "12px",
+            boxShadow: "0 6px 20px rgba(0, 0, 0, 0.15)",
+            fontSize: "1.1rem",
+            padding: "16px 20px",
           },
         }}
       />
 
       <form onSubmit={handleSubmit(onSubmit)} className={styles.formContainer}>
-        <h2 className={styles.formTitle}>Converse com nosso assistente</h2>
-        <p className={styles.formSubtitle}>
-          Preencha seus dados para iniciar o chat
-        </p>
+        <div className={styles.formHeader}>
+          <h2 className={styles.formTitle}>Cadastro para Atendimento</h2>
+          <p className={styles.formSubtitle}>
+            Preencha seus dados para conversar com a Bia, nossa especialista em
+            soluções de tintas
+          </p>
+        </div>
 
-        <div className={styles.formGrid}>
-          <InputField
-            label="Nome completo*"
-            id="nome"
-            error={errors.nome}
-            {...register("nome")}
-          />
+        <FormSection title="Dados Pessoais" icon={<UserIcon />}>
+          <div className={styles.formRow}>
+            <FormField<FormValues>
+              id="nome"
+              label="Nome completo"
+              register={register}
+              error={errors.nome}
+              required
+              placeholder="Digite seu nome completo"
+            />
+            <FormField<FormValues>
+              id="email"
+              label="E-mail"
+              type="email"
+              register={register}
+              error={errors.email}
+              required
+              placeholder="seu.email@exemplo.com"
+            />
+          </div>
+        </FormSection>
 
-          <InputField
-            label="E-mail*"
-            id="email"
-            type="email"
-            error={errors.email}
-            {...register("email")}
-          />
-
-          <div className={styles.inputGroup}>
-            <label htmlFor="cnpj" className={styles.inputLabel}>
-              CNPJ*
-            </label>
-            <input
+        <FormSection title="Dados da Empresa" icon={<BuildingIcon />}>
+          <div className={styles.formRow}>
+            <FormField<FormValues>
               id="cnpj"
-              className={`${styles.input} ${
-                errors.cnpj ? styles.inputError : ""
-              }`}
+              label="CNPJ"
+              register={register}
+              error={errors.cnpj}
+              required
               value={cnpjValue}
               onChange={handleCnpjChange}
               onBlur={handleCnpjBlur}
               placeholder="00.000.000/0000-00"
-              aria-invalid={!!errors.cnpj}
-              aria-describedby={errors.cnpj ? "cnpj-error" : undefined}
-              aria-label="CNPJ"
-              aria-busy={isFetching}
+              isFetching={isFetching}
             />
-            {errors.cnpj && (
-              <span id="cnpj-error" role="alert" className={styles.errorMessage}>
-                {errors.cnpj.message}
-              </span>
+            <FormField<FormValues>
+              id="empresa"
+              label="Empresa"
+              register={register}
+              error={errors.empresa}
+              required
+              placeholder="Nome da sua empresa"
+            />
+          </div>
+          <div className={styles.formRow}>
+            <FormField<FormValues>
+              id="cargo"
+              label="Cargo"
+              type="select"
+              register={register}
+              error={errors.cargo}
+              required
+              options={cargoOptions}
+            />
+
+            {cargoSelected === "outros" && (
+              <FormField<FormValues>
+                id="cargoOutro"
+                label="Informe o cargo"
+                register={register}
+                error={errors.cargoOutro}
+                required
+                placeholder="Seu cargo na empresa"
+              />
             )}
-            {isFetching && (
-              <div className={styles.loaderContainer}>
-                <div className={styles.loader}></div>
-                <span className={styles.loaderText}>
-                  Buscando dados do CNPJ...
-                </span>
-              </div>
+
+            <FormField<FormValues>
+              id="area"
+              label="Área de Atuação"
+              type="select"
+              register={register}
+              error={errors.area}
+              required
+              options={areaOptions}
+            />
+            {areaSelected === "outros" && (
+              <FormField<FormValues>
+                id="areaOutro"
+                label="Informe a área"
+                register={register}
+                error={errors.areaOutro}
+                required
+                placeholder="Área de atuação da empresa"
+              />
             )}
           </div>
-
-          <InputField
-            label="Empresa"
-            id="empresa"
-            error={errors.empresa}
-            {...register("empresa")}
-          />
-
-          <SelectField
-            label="Cargo*"
-            id="cargo"
-            options={cargoOptions}
-            error={errors.cargo}
-            {...register("cargo", { required: true })}
-          />
-          {cargoSelected === "outros" && (
-            <InputField
-              label="Informe o cargo"
-              id="cargoOutro"
-              {...register("cargoOutro")}
+          <div className={styles.formRow}>
+            <FormField<FormValues>
+              id="interesse"
+              label="Interesse Principal"
+              type="select"
+              register={register}
+              error={errors.interesse}
+              required
+              options={[
+                { value: "produto", label: "Conhecer produtos" },
+                { value: "servico", label: "Serviços personalizados" },
+                { value: "parceria", label: "Parcerias" },
+                { value: "outro", label: "Outro assunto" },
+              ]}
             />
-          )}
+          </div>
+        </FormSection>
 
-          <SelectField
-            label="Área de Atuação*"
-            id="area"
-            options={areaOptions}
-            error={errors.area}
-            {...register("area", { required: true })}
-          />
-          {areaSelected === "outros" && (
-            <InputField
-              label="Informe a área"
-              id="areaOutro"
-              {...register("areaOutro")}
-            />
-          )}
-
-          <SelectField
-            label="Interesse principal*"
-            id="interesse"
-            options={[
-              { value: "produto", label: "Conhecer produtos" },
-              { value: "servico", label: "Serviços personalizados" },
-              { value: "parceria", label: "Parcerias" },
-              { value: "outro", label: "Outro assunto" },
-            ]}
-            error={errors.interesse}
-            {...register("interesse")}
-          />
-        </div>
-
-        <div className={`${styles.lgpdContainer} ${errors.lgpdConsent ? styles.lgpdContainerError : ''}`}>
+        <div
+          className={`${styles.lgpdContainer} ${
+            errors.lgpdConsent ? styles.lgpdContainerError : ""
+          }`}
+        >
           <div className={styles.checkboxGroup}>
             <input
               type="checkbox"
               id="lgpdConsent"
               {...register("lgpdConsent")}
-              onChange={handleLgpdChange}
               className={styles.checkbox}
               aria-required="true"
               aria-invalid={!!errors.lgpdConsent}
-              aria-label="Consentimento de LGPD"
-              aria-describedby={errors.lgpdConsent ? "lgpdConsent-error" : undefined}
             />
             <label htmlFor="lgpdConsent" className={styles.lgpdLabel}>
               Li e concordo com a&nbsp;
@@ -370,7 +350,7 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
             </label>
           </div>
           {errors.lgpdConsent && (
-            <span id="lgpdConsent-error" role="alert" className={styles.errorMessage}>
+            <span className={styles.errorMessage}>
               {errors.lgpdConsent.message}
             </span>
           )}
@@ -384,74 +364,11 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
           disabled={!isValid}
           aria-label="Iniciar conversa"
         >
-          Iniciar conversa
+          Iniciar Conversa com a Bia
         </button>
       </form>
     </>
   );
 };
 
-type InputFieldProps = React.InputHTMLAttributes<HTMLInputElement> & {
-  label: string;
-  error?: { message?: string };
-};
-
-const InputField = ({ label, id, error, ...props }: InputFieldProps) => (
-  <div className={styles.inputGroup}>
-    <label htmlFor={id} className={styles.inputLabel}>
-      {label}
-    </label>
-    <input
-      id={id}
-      className={`${styles.input} ${error ? styles.inputError : ""}`}
-      aria-invalid={!!error}
-      aria-label={label}
-      aria-describedby={error ? `${id}-error` : undefined}
-      {...props}
-    />
-    {error && (
-      <span id={`${id}-error`} role="alert" className={styles.errorMessage}>
-        {error.message}
-      </span>
-    )}
-  </div>
-);
-
-type SelectFieldProps = React.SelectHTMLAttributes<HTMLSelectElement> & {
-  label: string;
-  options: ReadonlyArray<{ value: string; label: string }>;
-  error?: { message?: string };
-};
-
-const SelectField = ({
-  label,
-  id,
-  options,
-  error,
-  ...props
-}: SelectFieldProps) => (
-  <div className={styles.inputGroup}>
-    <label htmlFor={id} className={styles.inputLabel}>
-      {label}
-    </label>
-    <select
-      id={id}
-      className={`${styles.select} ${error ? styles.inputError : ""}`}
-      aria-invalid={!!error}
-      aria-label={label}
-      aria-describedby={error ? `${id}-error` : undefined}
-      {...props}
-    >
-      {options.map((opt) => (
-        <option key={opt.value} value={opt.value}>
-          {opt.label}
-        </option>
-      ))}
-    </select>
-    {error && (
-      <span id={`${id}-error`} role="alert" className={styles.errorMessage}>
-        {error.message}
-      </span>
-    )}
-  </div>
-);
+export default Form;

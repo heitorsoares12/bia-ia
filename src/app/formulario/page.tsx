@@ -4,14 +4,33 @@ import { useState } from 'react';
 import { Form } from '@/client/components/form/Form';
 import Chat from '@/client/components/chat/chat';
 import styles from "./page.module.css";
+import Image from 'next/image';
 
 export default function FormPage() {
   const [formDone, setFormDone] = useState(false);
 
   return (
-    <div>
+    <div className={styles.pageContainer}>
       {!formDone ? (
-        <Form onSuccess={() => setFormDone(true)} />
+        <>
+          <div className={styles.formWrapper}>
+            <Form onSuccess={() => setFormDone(true)} />
+          </div>
+          <div className={styles.assistantWrapper}>
+            <div className={styles.assistantContent}>
+              <Image
+                src="/assets/Bia-full.png"
+                alt="Bia - Assistente Virtual"
+                width={180}
+                height={180}
+                className={styles.assistantImage}
+              />
+              <h3>Olá!</h3>
+              <p>Sou a <strong>Bia</strong>, sua especialista em soluções de tintas.</p>
+              <p>Estou aqui para ajudá-lo a encontrar as melhores opções para seu projeto!</p>
+            </div>
+          </div>
+        </>
       ) : (
         <main className={styles.main}>
           <div className={styles.container}>
