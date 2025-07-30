@@ -65,6 +65,7 @@ const formSchema = z
           message: "Selecione um interesse válido",
         }
       ),
+    interesseOutro: z.string().optional(),
     lgpdConsent: z.boolean().refine((val) => val, {
       message: "Você deve consentir com a política de privacidade",
     }),
@@ -82,6 +83,13 @@ const formSchema = z
         code: z.ZodIssueCode.custom,
         path: ["areaOutro"],
         message: "Por favor, especifique a área.",
+      });
+    }
+    if (data.interesse === "outro" && !data.interesseOutro) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["interesseOutro"],
+        message: "Por favor, especifique o interesse.",
       });
     }
   });
@@ -128,6 +136,7 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
 
   const cargoSelected = watch("cargo");
   const areaSelected = watch("area");
+  const interesseSelected = watch("interesse");
 
   const formatCNPJ = (value: string) => {
     const cleaned = value.replace(/\D/g, "");
@@ -157,31 +166,35 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
 
   const onSubmit = async (data: FormValues) => {
     try {
-      const payload = {
+      const visitorData = {
         nome: data.nome,
         email: data.email,
         cnpj: data.cnpj,
         empresa: data.empresa,
-        cargo:
-          data.cargo === "outros" && data.cargoOutro
-            ? data.cargoOutro
-            : data.cargo,
-        areaAtuacao:
-          data.area === "outros" && data.areaOutro ? data.areaOutro : data.area,
-        interesse: data.interesse,
+        cargo: data.cargo === "outros" && data.cargoOutro ? data.cargoOutro : data.cargo,
+        area: data.area === "outros" && data.areaOutro ? data.areaOutro : data.area,
+        interesse: data.interesse === "outro" && data.interesseOutro ? data.interesseOutro : data.interesse,
         lgpdConsent: data.lgpdConsent,
       };
+
+      // Garante que a sessão anterior seja completamente removida
+      localStorage.removeItem('conversationId');
+      localStorage.removeItem('chatMessages');
 
       const res = await fetch("/api/visitor", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          ...visitorData,
+          areaAtuacao: visitorData.area, // Mantém o campo esperado pela API
+        }),
       });
 
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || "Falha ao enviar dados");
 
-      localStorage.setItem("visitorData", JSON.stringify(payload));
+      // Salva os dados do novo visitante
+      localStorage.setItem("visitorData", JSON.stringify(visitorData));
       onSuccess?.(result.visitorId);
     } catch (err: any) {
       toast.error(err.message || "Erro ao enviar dados");
@@ -316,6 +329,16 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
                 { value: "outro", label: "Outro assunto" },
               ]}
             />
+            {interesseSelected === "outro" && (
+              <FormField<FormValues>
+                id="interesseOutro"
+                label="Informe o interesse"
+                register={register}
+                error={errors.interesseOutro}
+                required
+                placeholder="Seu interesse principal"
+              />
+            )}
           </div>
         </FormSection>
 
