@@ -259,30 +259,21 @@ const Chat: React.FC = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ conversationId }),
       });
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: crypto.randomUUID(),
-          role: "assistant",
-          text: "Conversa encerrada. Se precisar de mais ajuda, estamos à disposição! 😊",
-          timestamp: Date.now(),
-        },
-      ]);
+      // Limpa os dados da sessão
+      localStorage.removeItem("conversationId");
+      localStorage.removeItem("chatMessages");
+      localStorage.removeItem("visitorData");
+      setConversationId(null);
+      setMessages([]);
       setConversationEnded(true);
+      setShowEndDialog(false);
+      // Redireciona para a tela inicial
+      router.push("/");
     } catch (err) {
       console.error(err);
     } finally {
       setShowEndDialog(false);
     }
-  };
-
-  const restartConversation = () => {
-    localStorage.removeItem("conversationId");
-    localStorage.removeItem("chatMessages");
-    setConversationId(null);
-    setMessages([]);
-    setConversationEnded(false);
-    router.push("/");
   };
 
   useEffect(() => {

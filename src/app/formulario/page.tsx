@@ -13,20 +13,17 @@ export default function FormPage() {
     <div className={styles.pageContainer}>
       <>
         <div className={styles.formWrapper}>
-          {!formDone ? (
-            <Form onSuccess={() => setFormDone(true)} />
-          ) : (
-            <Chat />
-          )}
+          {!formDone ? <Form onSuccess={() => setFormDone(true)} /> : <Chat />}
         </div>
         <div className={styles.assistantWrapper}>
           <div className={styles.assistantContent}>
             <Image
-              src="/assets/Bia-full.png"
-              alt="Bia - Assistente Virtual"
-              width={180}
-              height={180}
-              className={styles.assistantImage}
+              src="/assets/Bia.png"
+              alt="Assistente Virtual Bia"
+              width={220}
+              height={220}
+              className={styles.avatar}
+              priority
             />
             <h3>Olá!</h3>
             <p>
