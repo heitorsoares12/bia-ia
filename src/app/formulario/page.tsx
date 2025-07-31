@@ -16,11 +16,7 @@ export default function FormPage() {
           {!formDone ? (
             <Form onSuccess={() => setFormDone(true)} />
           ) : (
-            <main className={styles.main}>
-              <div className={styles.container}>
-                <Chat />
-              </div>
-            </main>
+            <Chat />
           )}
         </div>
         <div className={styles.assistantWrapper}>

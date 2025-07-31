@@ -1,16 +1,89 @@
 .chatContainer {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  max-width: 800px;
+  height: 100%;
   margin: 0 auto;
-  padding: 1rem;
   background-color: var(--background);
   color: var(--text);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   border-radius: 12px;
   overflow: hidden;
 }
+
+.chatHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
+  height: 60px;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #007bff;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.headerInfo h4 {
+  font-weight: bold;
+  color: #333;
+  margin: 0;
+}
+
+.headerInfo p {
+  color: #888;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.reloadIcon {
+  cursor: pointer;
+  font-size: 1.5rem;
+  color: #555;
+  transition: color 0.2s;
+}
+
+.reloadIcon:hover {
+  color: #000;
+}
+
+.endChatButton {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.endChatButton:hover {
+  background-color: #c82333;
+}
+
 
 .messagesContainer {
   flex-grow: 1;
@@ -41,14 +114,16 @@
 }
 
 .userMessage {
-  background: linear-gradient(135deg, #007bff, #0062cc);
-  color: white;
+  background: #DFE0E2;
+  color: #333333;
   align-self: flex-end;
 }
 
 .assistantMessage {
-  background: var(--message-bg);
-  color: var(--text);
+  background: linear-gradient(135deg, #007bff, #0062cc);
+  color: white;
+  /* background: var(--message-bg); */
+  /* color: var(--text); */
   align-self: flex-start;
   border: 1px solid #e9ecef;
 }
@@ -89,6 +164,9 @@
 }
 
 .sendButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 0.75rem 1.5rem;
   background: linear-gradient(135deg, #007bff, #0062cc);
   color: white;
@@ -99,6 +177,12 @@
   font-weight: 500;
   box-shadow: 0 2px 8px rgba(0, 123, 255, 0.25);
   transition: all 0.2s ease;
+}
+
+.sendIcon {
+  width: 20px;
+  height: 20px;
+  transform: rotate(-45deg) translateY(-2px);
 }
 
 .sendButton:hover:not(:disabled) {

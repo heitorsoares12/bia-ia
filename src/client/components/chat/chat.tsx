@@ -339,20 +339,19 @@ const Chat: React.FC = () => {
           restabelecida.
         </div>
       )}
-      <div className={styles.topActions}>
-        <button
-          onClick={
-            conversationEnded ? restartConversation : requestEndConversation
-          }
-          className={
-            conversationEnded ? styles.restartIconButton : styles.endIconButton
-          }
-          aria-label={
-            conversationEnded ? "Iniciar nova conversa" : "Encerrar conversa"
-          }
-        >
-          {conversationEnded ? "↻" : "✕"}
-        </button>
+      <div className={styles.chatHeader}>
+        <div className={styles.headerLeft}>
+          <div className={styles.avatar}>B</div>
+          <div className={styles.headerInfo}>
+            <h4>Chat com BIA</h4>
+            <p>Assistente Virtual Brancotex</p>
+          </div>
+        </div>
+        <div className={styles.headerRight}>
+          <button onClick={requestEndConversation} className={styles.endChatButton}>
+            Encerrar
+          </button>
+        </div>
       </div>
       {showEndDialog && (
         <>
@@ -413,7 +412,18 @@ const Chat: React.FC = () => {
           className={styles.sendButton}
           aria-label="Enviar mensagem"
         >
-          Enviar
+          <span>Enviar</span>
+          <svg
+            className={styles.sendIcon}
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M2.01 21L23 12L2.01 3L2 10L17 12L2 14L2.01 21Z"
+              fill="white"
+            />
+          </svg>
         </button>
       </form>
     </div>
