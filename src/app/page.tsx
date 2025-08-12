@@ -32,10 +32,22 @@ const Home = () => {
         </div>
         
         <p className={styles.welcomeText}>
-          Olá! Sou a Bia, sua assistente virtual da Brancotex. 
-          Posso te ajudar a encontrar a solução perfeita em tintas 
-          para seu projeto.
+          Sou a Bia, uma inteligência artificial em treinamento. Posso
+          cometer erros, mas vou fazer o possível para te ajudar a
+          encontrar as melhores opções para o seu projeto. Se algo
+          parecer impreciso, confirme comigo ou com nossa equipe.
         </p>
+
+        <div className={styles.instructions}>
+          <h2 className={styles.instructionsTitle}>Instruções de uso</h2>
+          <ol className={styles.instructionsList}>
+            <li>Seja específico(a) nas suas perguntas.</li>
+            <li>Faça uma pergunta por vez.</li>
+            <li>
+              Evite compartilhar dados sensíveis (ex.: CPF, senhas).
+            </li>
+          </ol>
+        </div>
         
         <button
           className={styles.chatButton}

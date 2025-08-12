@@ -5,6 +5,7 @@ import { sendMessage } from '@/server/services/chatService';
 const bodySchema = z.object({
   conversationId: z.string().uuid(),
   content: z.string().min(1),
+  formatDirectives: z.string().optional(),
 });
 
 export async function POST(req: Request) {
@@ -18,10 +19,14 @@ export async function POST(req: Request) {
     );
   }
 
-  const { conversationId, content } = result.data;
+  const { conversationId, content, formatDirectives } = result.data;
 
   try {
-    const assistantText = await sendMessage(conversationId, content);
+    const assistantText = await sendMessage(
+      conversationId,
+      content,
+      formatDirectives
+    );
 
     console.log('Message exchanged on conversation', conversationId);
 

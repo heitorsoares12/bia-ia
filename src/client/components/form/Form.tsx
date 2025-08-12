@@ -196,8 +196,9 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
       // Salva os dados do novo visitante
       localStorage.setItem("visitorData", JSON.stringify(visitorData));
       onSuccess?.(result.visitorId);
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao enviar dados");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro ao enviar dados";
+      toast.error(message);
     }
   };
 

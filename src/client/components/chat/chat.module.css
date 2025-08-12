@@ -58,6 +58,43 @@
   gap: 16px;
 }
 
+.quickQuestionsSection {
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #eee;
+}
+
+.quickQuestionsTitle {
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.quickQuestionsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.quickQuestionButton {
+  background-color: #eef1f4;
+  border: none;
+  border-radius: 20px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.quickQuestionButton:hover:enabled {
+  background-color: #d9dde1;
+}
+
+.quickQuestionButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .reloadIcon {
   cursor: pointer;
   font-size: 1.5rem;

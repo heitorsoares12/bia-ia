@@ -1,6 +1,12 @@
 
 import { useState, useCallback } from 'react';
-import { FieldValues, UseFormSetValue, UseFormTrigger, Path } from 'react-hook-form';
+import {
+  FieldValues,
+  UseFormSetValue,
+  UseFormTrigger,
+  Path,
+  PathValue,
+} from 'react-hook-form';
 import toast from 'react-hot-toast';
 
 export const useCnpjApi = <T extends FieldValues>(
@@ -47,7 +53,11 @@ export const useCnpjApi = <T extends FieldValues>(
           fetchBrasilApi(),
           fetchCnpjWs(),
         ]);
-        setValue('empresa' as Path<T>, nomeFantasia as any, { shouldValidate: true });
+        setValue(
+          'empresa' as Path<T>,
+          nomeFantasia as PathValue<T, Path<T>>,
+          { shouldValidate: true }
+        );
         trigger('empresa' as Path<T>);
         toast.success("Dados da empresa carregados!");
       } catch (err) {
