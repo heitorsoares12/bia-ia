@@ -34,6 +34,9 @@ export default function FormPage() {
               Estou aqui para ajudá-lo a encontrar as melhores opções para seu
               projeto!
             </p>
+            <p>
+              Se algo parecer impreciso, confirme comigo ou com nossa equipe.
+            </p>
           </div>
         </div>
       </>

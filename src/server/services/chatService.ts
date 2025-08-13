@@ -30,7 +30,7 @@ export async function startConversation(data: VisitorData) {
   return { conversationId: conversation.id };
 }
 
-export async function sendMessage(conversationId: string, content: string) {
+export async function sendMessage(conversationId: string, content: string, formatDirectives?: string) {
   const conversation = await prisma.conversation.findUnique({ where: { id: conversationId } });
   if (!conversation || conversation.status !== 'OPEN') {
     throw new Error('Conversa não encontrada ou encerrada');
@@ -50,7 +50,11 @@ export async function sendMessage(conversationId: string, content: string) {
     await prisma.conversation.update({ where: { id: conversationId }, data: { threadId } });
   }
 
-  const assistantText = await getAssistantResponse(threadId, content);
+  const enrichedContent = formatDirectives
+    ? `${content}\n\n[INSTRUÇÕES DE FORMATO – SIGA ESTRITAMENTE]\n${formatDirectives}`
+    : content;
+
+  const assistantText = await getAssistantResponse(threadId, enrichedContent);
 
   await prisma.message.create({
     data: {

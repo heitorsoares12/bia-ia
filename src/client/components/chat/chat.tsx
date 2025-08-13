@@ -7,6 +7,7 @@ import styles from "./chat.module.css";
 import Markdown from "react-markdown";
 import sanitize from "sanitize-html";
 import { ChatMessage } from "@/shared/types/chat";
+import { quickQuestions, QuickQuestion } from "@/data/quickQuestions";
 
 interface VisitorData {
   nome?: string;
@@ -112,7 +113,12 @@ const Chat: React.FC = () => {
   }, []);
 
   const sendMessage = useCallback(
-    async (content: string, id?: string, showUser: boolean = true) => {
+    async (
+      content: string,
+      id?: string,
+      showUser: boolean = true,
+      formatDirectives?: string
+    ) => {
       const convId = id || conversationId;
       if (!convId) return;
 
@@ -126,10 +132,17 @@ const Chat: React.FC = () => {
 
       setIsLoading(true);
       try {
+        const payload: {
+          conversationId: string;
+          content: string;
+          formatDirectives?: string;
+        } = { conversationId: convId, content };
+        if (formatDirectives) payload.formatDirectives = formatDirectives;
+
         const res = await fetch("/api/chat/send", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ conversationId: convId, content }),
+          body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error("Erro ao enviar mensagem");
         const json = await res.json();
@@ -150,6 +163,14 @@ const Chat: React.FC = () => {
       }
     },
     [conversationId]
+  );
+
+  const handleQuickQuestion = useCallback(
+    (q: QuickQuestion) => {
+      if (isLoading || conversationEnded || !conversationId) return;
+      sendMessage(q.userMessage, undefined, true, q.formatDirectives);
+    },
+    [conversationId, conversationEnded, isLoading, sendMessage]
   );
 
   const greetVisitor = useCallback(
@@ -339,7 +360,10 @@ const Chat: React.FC = () => {
           </div>
         </div>
         <div className={styles.headerRight}>
-          <button onClick={requestEndConversation} className={styles.endChatButton}>
+          <button
+            onClick={requestEndConversation}
+            className={styles.endChatButton}
+          >
             Encerrar
           </button>
         </div>
@@ -370,6 +394,22 @@ const Chat: React.FC = () => {
           </div>
         </>
       )}
+      <div className={styles.quickQuestionsSection}>
+        <h4 className={styles.quickQuestionsTitle}>Perguntas rápidas</h4>
+        <div className={styles.quickQuestionsList}>
+          {quickQuestions.map((q) => (
+            <button
+              key={q.id}
+              type="button"
+              className={styles.quickQuestionButton}
+              onClick={() => handleQuickQuestion(q)}
+              disabled={isLoading || conversationEnded || !conversationId}
+            >
+              {q.label}
+            </button>
+          ))}
+        </div>
+      </div>
       <div
         className={styles.messagesContainer}
         aria-live="polite"
