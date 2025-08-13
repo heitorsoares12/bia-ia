@@ -194,7 +194,7 @@
 }
 
 .toEndButton {
-  /* Posicionamento semelhante ao ChatGPT: "float" à direita acima do input */
+  /* Posicionamento semelhante ao ChatGPT: float à direita acima do input */
   position: sticky;
   bottom: 88px;
   align-self: flex-end;
