@@ -6,7 +6,7 @@
     "Fira Mono", "Droid Sans Mono", "Courier New", monospace;
 }
 
-* Theme colors */
+/* Theme colors */
 :root {
   --primary: #007bff;
   --secondary: #6c757d;
