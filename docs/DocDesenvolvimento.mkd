@@ -1,0 +1,118 @@
+# 📄 Documento de Desenvolvimento do Chatbot IA - Evento de Tintas
+
+## 1. 🎯 Introdução
+
+Este documento descreve o escopo, arquitetura, tecnologias e etapas de desenvolvimento para o projeto de um chatbot com IA integrado ao site da **Brancotex**, destinado a atender visitantes em um **evento de tintas em São Paulo**.
+
+O objetivo é fornecer um canal de atendimento automático que:
+
+* Auxilie os clientes na escolha de produtos.
+* Colete dados para ações de marketing futuras, em conformidade com a **LGPD**.
+
+> ⚠️ **Observação:** O site será rodado em um **tablet**, que ficará em um **totem na feira**, sendo no máximo **5 tablets simultâneos**.
+
+## 2. 🔥 Objetivos
+
+* **Atendimento em tempo real:** Permitir que os visitantes do evento conversem com o chatbot para tirar dúvidas sobre tintas e identificar a solução ideal.
+* **Coleta de Leads:** Coletar dados (**Nome, E-mail, Telefone, CNPJ**) com consentimento explícito à LGPD antes de iniciar a conversa.
+* **Registro de Interações:** Armazenar todas as mensagens trocadas (perguntas e respostas) em banco de dados para análise e futuras campanhas de marketing.
+* **Facilidade de Implantação:** Utilizar tecnologias com baixa curva de aprendizado e custos controlados, garantindo entrega rápida do MVP.
+
+## 3. 🗺️ Escopo do Projeto
+
+* **Formulário Inicial:** Captura de dados pessoais e aceite da política de privacidade.
+* **Chatbot IA:** Interface de chat baseada em **Next.js** e integração com a **OpenAI API**, treinada com os dados de tintas da Brancotex.
+* **Persistência de Dados:** Salvamento de visitantes e histórico de mensagens em banco de dados **SQLite via Prisma**.
+* **Feedback Final:** Captura de dados sobre como foi a experiencia do usuário.
+* **Painel Administrativo (Opcional):** Página protegida para visualizar visitantes e conversas.
+* **Deploy:** Publicação da aplicação em servidor **VPS da Hostinger**.
+
+> ✅ **A conversa com a IA deve iniciar com uma introdução personalizada, utilizando as informações do usuário coletadas no formulário. Assim, a IA já começa o atendimento direcionada de acordo com o interesse do usuário.**
+
+## 4. 🏗️ Arquitetura Técnica
+
+A aplicação segue princípios de **Clean Architecture**, organizada em camadas:
+
+* **Domain:** Entidades e regras de negócio (Visitor, Message).
+* **Application:** Casos de uso (gerenciar visitantes, processar chats, salvar mensagens).
+* **Infrastructure:** Integração com banco de dados (**Prisma/SQLite**) e **OpenAI API**.
+* **Interface:** Páginas e componentes do **Next.js (React)** para chat e painel administrativo.
+
+## 5. 🛠️ Tecnologias e Ferramentas
+
+* **Next.js 13+ com TypeScript**
+* **Prisma + SQLite** (ORM e banco de dados local)
+* **OpenAI SDK**
+* **Hostinger VPS** (Node.js)
+* **ESLint / Prettier**
+* **PM2** (gerenciamento de processos)
+
+## 6. 🔄 Fluxo de Usuário e LGPD
+
+1. Acesso à página de chat no tablet (totem).
+2. Formulário inicial solicita **Nome, E-mail, Telefone, CNPJ** e aceite da **política de privacidade (LGPD)**.
+3. **Validação e consentimento:** o chat é bloqueado até o aceite do usuário.
+4. Armazenamento dos dados pessoais no banco.
+5. **Início da conversa:** A IA inicia com uma **mensagem de introdução personalizada**, levando em consideração os dados informados pelo usuário e já direcionando para os produtos ou informações de interesse.
+6. Interação de chat: perguntas do usuário e respostas da IA.
+7. Encerramento: todas as interações são salvas e associadas ao visitante.
+
+## 7. 🗄️ Banco de Dados
+
+* **Visitor**
+
+  * id
+  * nome
+  * email
+  * telefone
+  * cnpj
+  * consentimento
+  * createdAt
+
+* **Message**
+
+  * id
+  * content
+  * sender (user / bot)
+  * timestamp
+  * visitorId
+
+## 8. 🌐 Endpoints e APIs
+
+* **POST /api/visitor** → Cria visitante e retorna `visitorId`.
+* **POST /api/chat** → Recebe `visitorId` e mensagem, salva no banco, consulta OpenAI e retorna a resposta.
+* *(Opcional)* **GET /api/admin/visitors** → Lista visitantes e conversas.
+
+## 9. 🛠️ Painel Administrativo (Opcional)
+
+* Rota protegida por autenticação simples (**usuário/senha via .env**).
+* Interface para visualizar **leads** e o **histórico de chats**.
+
+## 10. 🚀 Deploy na Hostinger
+
+1. Provisionar VPS com ambiente Node.js.
+2. Executar:
+
+   ```bash
+   git clone
+   npm install
+   # configurar arquivo .env
+   npm run build
+   pm2 start npm --name "chatbot" -- run start
+   ```
+3. Garantir que a aplicação está rodando 24/7.
+
+## 11. ✔️ Critérios de Aceitação
+
+* Chat inicia **somente após consentimento da LGPD**.
+* Mensagens do usuário e da IA são **salvas no banco**.
+* Chatbot responde com base nos dados fornecidos pela **Brancotex**.
+* Aplicação disponível e funcional na **URL de produção**.
+* *(Opcional)* Painel administrativo funcionando e protegido.
+
+## 12. ✅ Considerações Finais
+
+Este plano garante clareza sobre as etapas, entregáveis e responsabilidades técnicas do projeto.
+
+> ⚠️ Quaisquer alterações de escopo devem ser negociadas previamente.
+
