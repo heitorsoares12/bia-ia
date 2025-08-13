@@ -5,8 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "migrate:deploy": "prisma migrate deploy",
+    "postinstall": "prisma generate",
+    "start": "next start -p $PORT"
   },
   "dependencies": {
     "next": "15.2.3",
