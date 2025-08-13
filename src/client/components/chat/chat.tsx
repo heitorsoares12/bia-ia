@@ -84,22 +84,36 @@ const Chat: React.FC = () => {
   const router = useRouter();
   const [showEndDialog, setShowEndDialog] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const scrollAreaRef = useRef<HTMLDivElement | null>(null);
   const visitorDataRef = useRef<VisitorData | null>(null);
   const initRef = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
   const [isOnline, setIsOnline] = useState(true);
+  const [isNearBottom, setIsNearBottom] = useState(true);
+  const wasNearBottom = useRef(true);
 
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToBottom = useCallback(
+    (behavior: ScrollBehavior = "auto") => {
+      messagesEndRef.current?.scrollIntoView({ behavior });
+    },
+    []
+  );
+
+  const handleScroll = useCallback(() => {
+    if (!scrollAreaRef.current) return;
+    const { scrollTop, clientHeight, scrollHeight } = scrollAreaRef.current;
+    const currentIsNearBottom = scrollTop + clientHeight >= scrollHeight - 100;
+    setIsNearBottom(currentIsNearBottom);
+    wasNearBottom.current = currentIsNearBottom;
   }, []);
 
+  const debouncedHandleScroll = useDebouncedCallback(handleScroll, 100);
+
   useEffect(() => {
-    scrollToBottom();
-    const lastMessage = document.querySelector(
-      `.${styles.messageWrapper}:last-child`
-    );
-    (lastMessage as HTMLElement | null)?.focus?.();
-  }, [messages, scrollToBottom]);
+    if (wasNearBottom.current) {
+      scrollToBottom("auto");
+    }
+  }, [messages, isLoading, scrollToBottom]);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -345,29 +359,6 @@ const Chat: React.FC = () => {
       role="region"
       aria-label="Chat de conversa"
     >
-      {!isOnline && (
-        <div className={styles.offlineBanner}>
-          Você está offline. Mensagens serão enviadas quando a conexão for
-          restabelecida.
-        </div>
-      )}
-      <div className={styles.chatHeader}>
-        <div className={styles.headerLeft}>
-          <div className={styles.avatar}>B</div>
-          <div className={styles.headerInfo}>
-            <h4>Chat com BIA</h4>
-            <p>Assistente Virtual Brancotex</p>
-          </div>
-        </div>
-        <div className={styles.headerRight}>
-          <button
-            onClick={requestEndConversation}
-            className={styles.endChatButton}
-          >
-            Encerrar
-          </button>
-        </div>
-      </div>
       {showEndDialog && (
         <>
           <div className={styles.overlay} />
@@ -394,37 +385,82 @@ const Chat: React.FC = () => {
           </div>
         </>
       )}
-      <div className={styles.quickQuestionsSection}>
-        <h4 className={styles.quickQuestionsTitle}>Perguntas rápidas</h4>
-        <div className={styles.quickQuestionsList}>
-          {quickQuestions.map((q) => (
-            <button
-              key={q.id}
-              type="button"
-              className={styles.quickQuestionButton}
-              onClick={() => handleQuickQuestion(q)}
-              disabled={isLoading || conversationEnded || !conversationId}
-            >
-              {q.label}
-            </button>
-          ))}
-        </div>
-      </div>
       <div
-        className={styles.messagesContainer}
-        aria-live="polite"
-        aria-atomic="false"
-        aria-relevant="additions"
+        className={styles.scrollArea}
+        onScroll={debouncedHandleScroll}
+        ref={scrollAreaRef}
       >
-        {messages.map((m) => (
-          <div key={m.id} className={styles.messageWrapper}>
-            <MemoizedMessage {...m} />
+        {!isOnline && (
+          <div className={styles.offlineBanner}>
+            Você está offline. Mensagens serão enviadas quando a conexão for
+            restabelecida.
           </div>
-        ))}
-        {isLoading && <LoadingIndicator text={thinking} />}
-        <div ref={messagesEndRef} />
+        )}
+        <div className={styles.chatHeader}>
+          <div className={styles.headerLeft}>
+            <div className={styles.avatar}>B</div>
+            <div className={styles.headerInfo}>
+              <h4>Chat com BIA</h4>
+              <p>Assistente Virtual Brancotex</p>
+            </div>
+          </div>
+          <div className={styles.headerRight}>
+            <button
+              onClick={requestEndConversation}
+              className={styles.endChatButton}
+            >
+              Encerrar
+            </button>
+          </div>
+        </div>
+        <div className={styles.quickQuestionsSection}>
+          <h4 className={styles.quickQuestionsTitle}>Perguntas rápidas</h4>
+          <div className={styles.quickQuestionsList}>
+            {quickQuestions.map((q) => (
+              <button
+                key={q.id}
+                type="button"
+                className={styles.quickQuestionButton}
+                onClick={() => handleQuickQuestion(q)}
+                disabled={isLoading || conversationEnded || !conversationId}
+              >
+                {q.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div
+          className={styles.messagesContainer}
+          aria-live="polite"
+          aria-atomic="false"
+          aria-relevant="additions"
+        >
+          {messages.map((m) => (
+            <div key={m.id} className={styles.messageWrapper}>
+              <MemoizedMessage {...m} />
+            </div>
+          ))}
+          {isLoading && <LoadingIndicator text={thinking} />}
+          <div ref={messagesEndRef} />
+        </div>
+        {!isNearBottom && (
+          <button
+            onClick={() => scrollToBottom()}
+            className={styles.toEndButton}
+            aria-label="Ir para o fim"
+            title="Ir para o fim"
+          >
+            <svg
+              className={styles.toEndIcon}
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path d="M6 9l6 6 6-6" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        )}
       </div>
-
       <form ref={formRef} onSubmit={handleSubmit} className={styles.inputForm}>
         <input
           type="text"
