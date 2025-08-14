@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { sendMessage } from '@/server/services/chatService';
+import { streamAssistantResponse } from '@/server/services/chatService';
 
 const bodySchema = z.object({
   conversationId: z.string().uuid(),
@@ -22,14 +22,16 @@ export async function POST(req: Request) {
   const { conversationId, content, formatDirectives } = result.data;
 
   try {
-    const assistantText = await sendMessage(conversationId, content, formatDirectives);
+    const stream = await streamAssistantResponse(conversationId, content, formatDirectives);
 
-    console.log('Message exchanged on conversation', conversationId);
-
-    return NextResponse.json(
-      { success: true, data: { message: assistantText }, message: null, errors: [] },
-      { status: 200 }
-    );
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+        'Transfer-Encoding': 'chunked',
+      },
+    });
   } catch (error) {
     console.error('Error sending message', error);
     return NextResponse.json(

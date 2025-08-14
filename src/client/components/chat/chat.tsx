@@ -158,18 +158,53 @@ const Chat: React.FC = () => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-        if (!res.ok) throw new Error("Erro ao enviar mensagem");
-        const json = await res.json();
+        if (!res.ok || !res.body) throw new Error("Erro ao enviar mensagem");
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
         const assistantId = crypto.randomUUID();
+
         setMessages((prev) => [
           ...prev,
-          {
-            id: assistantId,
-            role: "assistant",
-            text: json.data.message,
-            timestamp: Date.now(),
-          },
+          { id: assistantId, role: "assistant", text: "", timestamp: Date.now() },
         ]);
+
+        let buffer = "";
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          // processa linhas SSE completas
+          const events = buffer.split("\n\n");
+          buffer = events.pop() || "";
+          for (const evt of events) {
+            const line = evt.trim();
+            if (!line) continue;
+            if (line.startsWith("event:")) {
+              continue;
+            }
+            if (line.startsWith("data:")) {
+              const dataStr = line.slice(5).trim();
+              if (dataStr === '"end"') continue;
+              try {
+                const data = JSON.parse(dataStr) as { content?: string };
+                if (data.content) {
+                  setMessages((prev) => {
+                    if (prev.length === 0) return prev;
+                    const last = prev[prev.length - 1];
+                    if (last.id === assistantId && last.role === "assistant") {
+                      const updated = { ...last, text: last.text + data.content };
+                      return [...prev.slice(0, -1), updated];
+                    }
+                    return prev;
+                  });
+                }
+              } catch (e) {
+              }
+            }
+          }
+        }
       } catch (err) {
         console.error(err);
       } finally {

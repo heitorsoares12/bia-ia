@@ -1,6 +1,6 @@
 import { prisma } from '@/server/utils/prisma';
 import { Prisma } from '@prisma/client';
-import { getAssistantResponse, createThread } from './openaiService';
+import { getAssistantResponse, createThread, getAssistantResponseStream } from './openaiService';
 
 interface VisitorData {
   nome: string;
@@ -65,6 +65,33 @@ export async function sendMessage(conversationId: string, content: string, forma
   });
 
   return assistantText;
+}
+
+export async function streamAssistantResponse(conversationId: string, content: string, formatDirectives?: string) {
+  const conversation = await prisma.conversation.findUnique({ where: { id: conversationId } });
+  if (!conversation || conversation.status !== 'OPEN') {
+    throw new Error('Conversa não encontrada ou encerrada');
+  }
+
+  await prisma.message.create({
+    data: {
+      conversationId,
+      role: 'USER',
+      content,
+    } as Prisma.MessageUncheckedCreateInput,
+  });
+
+  let threadId = conversation.threadId;
+  if (!threadId) {
+    threadId = await createThread();
+    await prisma.conversation.update({ where: { id: conversationId }, data: { threadId } });
+  }
+
+  const enrichedContent = formatDirectives
+    ? `${content}\n\n[INSTRUÇÕES DE FORMATO – SIGA ESTRITAMENTE]\n${formatDirectives}`
+    : content;
+
+  return getAssistantResponseStream(threadId, enrichedContent);
 }
 
 export async function endConversation(conversationId: string) {
