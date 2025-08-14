@@ -91,6 +91,10 @@ const Chat: React.FC = () => {
   const [isOnline, setIsOnline] = useState(true);
   const [isNearBottom, setIsNearBottom] = useState(true);
   const wasNearBottom = useRef(true);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [toEndVisible, setToEndVisible] = useState(false);
+  const hideTimerRef = useRef<number | null>(null);
+  const prevMessagesLengthRef = useRef(0);
 
   const scrollToBottom = useCallback(
     (behavior: ScrollBehavior = "auto") => {
@@ -105,6 +109,15 @@ const Chat: React.FC = () => {
     const currentIsNearBottom = scrollTop + clientHeight >= scrollHeight - 100;
     setIsNearBottom(currentIsNearBottom);
     wasNearBottom.current = currentIsNearBottom;
+
+    if (currentIsNearBottom) {
+      setUnreadCount(0);
+      setToEndVisible(false);
+      if (hideTimerRef.current) {
+        window.clearTimeout(hideTimerRef.current);
+        hideTimerRef.current = null;
+      }
+    }
   }, []);
 
   const debouncedHandleScroll = useDebouncedCallback(handleScroll, 100);
@@ -114,6 +127,69 @@ const Chat: React.FC = () => {
       scrollToBottom("auto");
     }
   }, [messages, isLoading, scrollToBottom]);
+
+
+  const showToEndTemporarily = useCallback(() => {
+    setToEndVisible(true);
+    if (hideTimerRef.current) {
+      window.clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = null;
+    }
+    hideTimerRef.current = window.setTimeout(() => {
+      setToEndVisible(false);
+      hideTimerRef.current = null;
+    }, 5000);
+  }, []);
+
+  useEffect(() => {
+    const prevLen = prevMessagesLengthRef.current;
+    const currLen = messages.length;
+    if (currLen > prevLen) {
+      if (!wasNearBottom.current) {
+        const newMessages = messages.slice(prevLen);
+        const newAssistantCount = newMessages.filter((m) => m.role === "assistant").length;
+        if (newAssistantCount > 0) {
+          setUnreadCount((c) => c + newAssistantCount);
+          showToEndTemporarily();
+        }
+      }
+      prevMessagesLengthRef.current = currLen;
+    }
+  }, [messages, showToEndTemporarily]);
+
+  useEffect(() => {
+    if (!isNearBottom) {
+      showToEndTemporarily();
+    }
+  }, [isNearBottom, showToEndTemporarily]);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    const el = scrollAreaRef.current;
+    if (!vv || !el) return;
+    const update = () => {
+      const keyboardOffset = Math.max(0, window.innerHeight - vv.height);
+      const base = 88;
+      const safe = Math.max(base, base + keyboardOffset);
+      el.style.setProperty("--to-end-bottom", `calc(${safe}px + env(safe-area-inset-bottom, 0px))`);
+    };
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (hideTimerRef.current) {
+        window.clearTimeout(hideTimerRef.current);
+        hideTimerRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -477,24 +553,59 @@ const Chat: React.FC = () => {
           ))}
           {isLoading && <LoadingIndicator text={thinking} />}
           <div ref={messagesEndRef} />
-        </div>
-        {!isNearBottom && (
-          <button
-            onClick={() => scrollToBottom()}
-            className={styles.toEndButton}
-            aria-label="Ir para o fim"
-            title="Ir para o fim"
-          >
-            <svg
-              className={styles.toEndIcon}
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
+          {!isNearBottom && (
+            <button
+              onClick={() => {
+                scrollToBottom();
+                setUnreadCount(0);
+                setToEndVisible(false);
+              }}
+              className={`${styles.toEndButton} ${unreadCount > 0 ? styles.toEndButtonNew : ""} ${toEndVisible ? styles.toEndVisible : styles.toEndHidden}`}
+              aria-label={unreadCount > 0 ? `Ir para o fim. ${unreadCount} nova${unreadCount > 1 ? "s" : ""} mensagem${unreadCount > 1 ? "s" : ""}.` : "Ir para o fim do chat"}
+              aria-haspopup="false"
+              aria-live="off"
+              title={unreadCount > 0 ? `Novas mensagens: ${unreadCount}` : "Ir para o fim do chat"}
+              onMouseEnter={() => {
+                if (hideTimerRef.current) {
+                  window.clearTimeout(hideTimerRef.current);
+                  hideTimerRef.current = null;
+                }
+              }}
+              onMouseLeave={() => {
+                if (!toEndVisible) {
+                  showToEndTemporarily();
+                }
+              }}
+              onFocus={() => {
+                if (hideTimerRef.current) {
+                  window.clearTimeout(hideTimerRef.current);
+                  hideTimerRef.current = null;
+                }
+              }}
+              onBlur={() => {
+                if (!toEndVisible) {
+                  showToEndTemporarily();
+                }
+              }}
             >
-              <path d="M6 9l6 6 6-6" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        )}
+              <svg
+                className={styles.toEndIcon}
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path d="M6 7l6 6 6-6" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M6 12l6 6 6-6" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {unreadCount > 0 && (
+                <span className={styles.unreadBadge} aria-hidden="true">{unreadCount > 99 ? "99+" : unreadCount}</span>
+              )}
+              <span className={styles.tooltip} role="tooltip">
+                {unreadCount > 0 ? `${unreadCount} nova${unreadCount > 1 ? "s" : ""} mensagem${unreadCount > 1 ? "s" : ""}. Clique para ir ao fim.` : "Ir para o fim do chat"}
+              </span>
+            </button>
+          )}
+        </div>
       </div>
       <form ref={formRef} onSubmit={handleSubmit} className={styles.inputForm}>
         <input

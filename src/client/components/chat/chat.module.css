@@ -194,41 +194,115 @@
 }
 
 .toEndButton {
-  /* Posicionamento semelhante ao ChatGPT: float à direita acima do input */
   position: sticky;
-  bottom: 88px;
+  bottom: var(--to-end-bottom, calc(88px + env(safe-area-inset-bottom, 0px)));
   align-self: flex-end;
   margin: 0 16px 0 0;
   border: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(0, 123, 255, 0.22);
   backdrop-filter: saturate(180%) blur(10px);
-  color: #111827;
+  color: #ffffff;
   border-radius: 999px;
-  width: 36px;
-  height: 36px;
-  display: flex;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, opacity 0.25s ease, visibility 0.25s ease;
   z-index: 4;
+  isolation: isolate;
 }
 
 .toEndButton:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
-  background: #ffffff;
+  background: rgba(0, 123, 255, 0.22);
 }
 
 .toEndButton:active {
   transform: translateY(0);
 }
 
+.toEndButton:focus-visible {
+  outline: 3px solid rgba(0, 123, 255, 0.4);
+  outline-offset: 2px;
+}
+
 .toEndIcon {
   width: 18px;
   height: 18px;
-  stroke: #111827;
+  stroke: #007bff
+}
+
+.toEndButtonNew {
+  border-color: rgba(0, 123, 255, 0.35);
+  background: rgba(230, 244, 255, 0.95);
+  box-shadow: 0 10px 28px rgba(0, 123, 255, 0.22);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .toEndButtonNew {
+    animation: pulseShadow 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes pulseShadow {
+  0%, 100% { box-shadow: 0 10px 28px rgba(0, 123, 255, 0.22); }
+  50% { box-shadow: 0 14px 34px rgba(0, 123, 255, 0.28); }
+}
+
+.unreadBadge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+}
+
+.tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  background: rgba(17, 24, 39, 0.95);
+  color: #fff;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+  transition: opacity 0.15s ease, visibility 0.15s ease, transform 0.15s ease;
+  pointer-events: none;
+}
+
+.toEndButton:hover .tooltip,
+.toEndButton:focus-visible .tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.toEndVisible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.toEndHidden {
+  opacity: 0;
+  visibility: hidden;
 }
 
 .input {
@@ -560,6 +634,12 @@
   .endButton {
     margin: 0.75rem;
     padding: 0.65rem 1.25rem;
+  }
+  
+  .toEndButton {
+    width: 36px;
+    height: 36px;
+    margin-right: 12px;
   }
 }
 
