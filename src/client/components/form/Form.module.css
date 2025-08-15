@@ -91,6 +91,12 @@
   background: #fff;
 }
 
+@media (max-width: 768px) {
+  .formContainer {
+    padding: 15px;
+  }
+}
+
 .formHeader {
   text-align: left;
   margin-bottom: 20px;
@@ -106,11 +112,28 @@
   font-size: 1rem;
 }
 
+@media (max-width: 768px) {
+  .formTitle {
+    font-size: 1.5rem;
+  }
+  
+  .formSubtitle {
+    font-size: 0.9rem;
+  }
+}
+
 .formSection {
   background: #f1f5ff;
   padding: 20px;
   border-radius: 12px;
   margin-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+  .formSection {
+    padding: 15px;
+    margin-bottom: 15px;
+  }
 }
 
 .sectionHeader {
@@ -137,6 +160,21 @@
   flex-wrap: nowrap;
   gap: 20px;
   margin-bottom: 15px;
+}
+
+/* Responsividade para tablets */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .formRow {
+    gap: 15px;
+  }
+}
+
+/* Responsividade para mobile */
+@media (max-width: 768px) {
+  .formRow {
+    flex-direction: column;
+    gap: 15px;
+  }
 }
 
 .formRow > div {
@@ -170,10 +208,69 @@
   width: 100%;
 }
 
+.inputError {
+  border-color: #e53e3e;
+  box-shadow: 0 0 0 2px rgba(229, 62, 62, 0.2);
+}
+
+/* Tablets */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .input,
+  .select {
+    padding: 15px;
+    font-size: 0.95rem;
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .input,
+  .select {
+    padding: 16px;
+    font-size: 1rem;
+    min-height: 44px;
+    box-sizing: border-box;
+  }
+}
+
+/* Telas muito pequenas */
+@media (max-width: 480px) {
+  .input,
+  .select {
+    padding: 18px;
+    font-size: 1.1rem;
+    min-height: 48px;
+  }
+}
+
+.inputLabel {
+  font-weight: 500;
+  color: #2d3748;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+}
+
+.requiredStar {
+  color: #e53e3e;
+}
+
+@media (max-width: 768px) {
+  .inputLabel {
+    font-size: 1rem;
+    margin-bottom: 8px;
+  }
+}
+
 .errorMessage {
   color: #e53e3e;
   font-size: 0.8rem;
   margin-top: 4px;
+}
+
+@media (max-width: 768px) {
+  .errorMessage {
+    font-size: 0.9rem;
+  }
 }
 
 .submitButton {
@@ -190,6 +287,15 @@
   margin-top: 20px;
 }
 
+@media (max-width: 768px) {
+  .submitButton {
+    padding: 18px;
+    font-size: 1.2rem;
+    min-height: 50px;
+    margin-top: 25px;
+  }
+}
+
 .submitButton:disabled {
   background: #cbd5e0;
   cursor: not-allowed;
@@ -197,6 +303,12 @@
 
 .lgpdContainer {
   margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+  .lgpdContainer {
+    margin-top: 25px;
+  }
 }
 
 .checkboxGroup {
@@ -208,6 +320,14 @@
   transition: all 0.2s ease;
 }
 
+@media (max-width: 768px) {
+  .checkboxGroup {
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 0.75rem;
+  }
+}
+
 .checkbox {
   min-width: 30px;
   min-height: 30px;
@@ -216,6 +336,14 @@
   appearance: none;
   transition: all 0.2s ease;
   position: relative;
+}
+
+@media (max-width: 768px) {
+  .checkbox {
+    min-width: 40px;
+    min-height: 40px;
+    border-width: 3px;
+  }
 }
 
 .checkbox:checked {
@@ -233,6 +361,16 @@
   border: solid white;
   border-width: 0 3px 3px 0;
   transform: rotate(45deg);
+}
+
+@media (max-width: 768px) {
+  .checkbox:checked::after {
+    left: 11px;
+    top: 6px;
+    width: 10px;
+    height: 16px;
+    border-width: 0 4px 4px 0;
+  }
 }
 
 .checkbox:focus {
@@ -253,6 +391,14 @@
   margin-left: 0.5rem;
   cursor: pointer;
   user-select: none;
+}
+
+@media (max-width: 768px) {
+  .lgpdLabel {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-left: 0.75rem;
+  }
 }
 
 .privacyLink {

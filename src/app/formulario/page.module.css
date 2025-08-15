@@ -6,6 +6,24 @@
   background-color: #f0f2f5;
 }
 
+/* Responsividade para tablets */
+@media (max-width: 1024px) {
+  .pageContainer {
+    grid-template-columns: 65% 35%;
+  }
+}
+
+/* Responsividade para mobile */
+@media (max-width: 768px) {
+  .pageContainer {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+}
+
 .formWrapper {
   background: #fff;
   padding: 2rem;
@@ -15,6 +33,23 @@
   height: 100vh;
   box-sizing: border-box;
   min-height: 0;
+}
+
+@media (max-width: 768px) {
+  .formWrapper {
+    height: auto;
+    min-height: auto;
+    padding: 1rem;
+    border-radius: 0;
+    flex: 1;
+  }
+}
+
+/* Telas muito pequenas */
+@media (max-width: 480px) {
+  .formWrapper {
+    padding: 0.75rem;
+  }
 }
 
 .chatContainer {
@@ -32,6 +67,15 @@
   justify-content: center;
 }
 
+@media (max-width: 768px) {
+  .assistantWrapper {
+    order: -1;
+    min-height: 200px;
+    padding: 1rem;
+    justify-content: center;
+  }
+}
+
 .assistantImage {
   width: auto;
   height: auto;
@@ -45,6 +89,19 @@
 .assistantContent p {
   font-size: 1.2rem;
   max-width: 350px;
+}
+
+@media (max-width: 768px) {
+  .assistantContent h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .assistantContent p {
+    font-size: 1rem;
+    max-width: 100%;
+    margin: 0.25rem 0;
+  }
 }
 
 
