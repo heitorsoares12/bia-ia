@@ -27,15 +27,12 @@ export default function FormPage() {
             />
             <h3>Olá!</h3>
             <p>
-              Sou a <strong>Bia</strong>, sua especialista em soluções de
-              tintas.
+              Estou aqui para ajudá-lo a encontrar a melhor solução 
+              <strong> BRANCOTEX</strong>, para seu projeto, mas ainda estou em treinamento.
             </p>
             <p>
-              Estou aqui para ajudá-lo a encontrar as melhores opções para seu
-              projeto!
-            </p>
-            <p>
-              Se algo parecer impreciso, confirme comigo ou com nossa equipe.
+              Então, caso alguma informação pareça imprecisa, por favor
+              pergunte a um de nossos especialistas.
             </p>
           </div>
         </div>

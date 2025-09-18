@@ -14,36 +14,62 @@ import { FormSection } from "./FormSection";
 import { useCnpjApi } from "@/client/hooks/useCnpjApi";
 
 const cargoOptions = [
-  { value: "comprador", label: "Comprador" },
+  { value: "diretorProprietario", label: "Diretor/Proprietário" },
   { value: "gerenteCompras", label: "Gerente de Compras" },
-  { value: "proprietario", label: "Proprietário" },
+  { value: "comprador", label: "Comprador" },
+  { value: "gerenteProducao", label: "Gerente de Produção" },
+  { value: "tecnicoEngenheiro", label: "Técnico/Engenheiro" },
   { value: "gerenteVendas", label: "Gerente de Vendas" },
-  { value: "vendedor", label: "Vendedor" },
-  { value: "arquitetoDecorador", label: "Arquitetura/Decorador" },
-  { value: "engenheiro", label: "Engenheiro" },
+  { value: "representanteComercial", label: "Representante Comercial" },
   { value: "outros", label: "Outros" },
 ] as const;
 
 const areaOptions = [
+  { value: "fabricanteTintas", label: "Fabricante de tintas" },
+  { value: "distribuidorRevenda", label: "Distribuidor/Revenda" },
   { value: "construcaoCivil", label: "Construção Civil" },
-  { value: "arquiteturaDecoracao", label: "Arquitetura/Decoração" },
   { value: "industriaMoveleira", label: "Indústria Moveleira" },
   { value: "automotivo", label: "Automotivo" },
-  { value: "naval", label: "Naval" },
-  { value: "varejoMateriais", label: "Varejo de Materiais" },
+  { value: "naval", label: "Naval/Marítimo" },
+  { value: "arquiteturaDecoracao", label: "Arquitetura/Decoração" },
   { value: "outros", label: "Outros" },
+] as const;
+
+const interesseOptions = [
+  { value: "materiaPrima", label: "Matéria-prima para tintas" },
+  { value: "novidadesLancamentos", label: "Novidades e lançamentos" },
+  { value: "novosFornecedores", label: "Novos fornecedores" },
+  { value: "relacionamentoProfissional", label: "Relacionamento profissional" },
+  { value: "informacoesTecnicas", label: "Informações técnicas" },
+  { value: "outro", label: "Outros" },
 ] as const;
 
 const formSchema = z
   .object({
     nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-    email: z.string().email("E-mail inválido"),
+    email: z.string().email("E-mail inválido").refine(async (email) => {
+        if (!email) return false;
+        try {
+            const response = await fetch(`/api/visitor?email=${email}`);
+            if (!response.ok) return false;
+            const data = await response.json();
+            return !data.exists;
+        } catch (error) {
+            return false;
+        }
+    }, "Este e-mail já está cadastrado."),
     cnpj: z
       .string()
-      .min(14, "CNPJ deve ter 14 dígitos")
-      .refine((cnpj) => isValidCNPJ(cnpj), {
-        message: "CNPJ inválido",
-      }),
+      .optional()
+      .refine(
+        (cnpj) => {
+          if (!cnpj) return true; // Permite CNPJ vazio
+          return isValidCNPJ(cnpj); // Valida se preenchido
+        },
+        {
+          message: "CNPJ inválido",
+        }
+      ),
     empresa: z.string().min(2, "Empresa é obrigatória"),
     cargo: z
       .string({ required_error: "Por favor, selecione um cargo" })
@@ -59,12 +85,9 @@ const formSchema = z
     areaOutro: z.string().optional(),
     interesse: z
       .string({ required_error: "Selecione seu interesse principal" })
-      .refine(
-        (val) => ["produto", "servico", "parceria", "outro"].includes(val),
-        {
-          message: "Selecione um interesse válido",
-        }
-      ),
+      .refine((val) => interesseOptions.some((opt) => opt.value === val), {
+        message: "Selecione um interesse válido",
+      }),
     interesseOutro: z.string().optional(),
     lgpdConsent: z.boolean().refine((val) => val, {
       message: "Você deve consentir com a política de privacidade",
@@ -257,7 +280,6 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
               label="CNPJ"
               register={register}
               error={errors.cnpj}
-              required
               value={cnpjValue}
               onChange={handleCnpjChange}
               onBlur={handleCnpjBlur}
@@ -276,7 +298,7 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
           <div className={styles.formRow}>
             <FormField<FormValues>
               id="cargo"
-              label="Cargo"
+              label="Cargo/Função"
               type="select"
               register={register}
               error={errors.cargo}
@@ -287,11 +309,11 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
             {cargoSelected === "outros" && (
               <FormField<FormValues>
                 id="cargoOutro"
-                label="Informe o cargo"
+                label="Informe o Cargo/Função"
                 register={register}
                 error={errors.cargoOutro}
                 required
-                placeholder="Seu cargo na empresa"
+                placeholder="Seu cargo/função na empresa"
               />
             )}
 
@@ -318,17 +340,12 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
           <div className={styles.formRow}>
             <FormField<FormValues>
               id="interesse"
-              label="Interesse Principal"
+              label="Principal Interesse na Feira"
               type="select"
               register={register}
               error={errors.interesse}
               required
-              options={[
-                { value: "produto", label: "Conhecer produtos" },
-                { value: "servico", label: "Serviços personalizados" },
-                { value: "parceria", label: "Parcerias" },
-                { value: "outro", label: "Outro assunto" },
-              ]}
+              options={interesseOptions}
             />
             {interesseSelected === "outro" && (
               <FormField<FormValues>
@@ -337,7 +354,7 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
                 register={register}
                 error={errors.interesseOutro}
                 required
-                placeholder="Seu interesse principal"
+                placeholder="Seu principal interesse na feira"
               />
             )}
           </div>

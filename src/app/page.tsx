@@ -32,9 +32,8 @@ const Home = () => {
         </div>
         
         <p className={styles.welcomeText}>
-          Olá! Sou a Bia, sua assistente virtual da Brancotex. 
-          Posso te ajudar a encontrar a solução perfeita em tintas 
-          para seu projeto.
+          Olá, eu sou a B.i.a, a Inteligência Artificial da Brancotex,
+          e estou aqui para te ajudar a encontrar o produto ideal para sua formulação.
         </p>
         
         <button
@@ -54,7 +53,7 @@ const Home = () => {
       </div>
       
       <footer className={styles.footer}>
-        Evento Corporativo Brancotex • São Paulo 2024
+        BRANCOTEX - ABRAFATI SHOW 2025
       </footer>
     </div>
   );
