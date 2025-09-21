@@ -14,7 +14,7 @@ export async function getAssistantResponse(threadId: string, content: string) {
   });
 
   const timeoutPromise = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error('Timeout ao enviar mensagem')), 10000)
+    setTimeout(() => reject(new Error('Timeout ao enviar mensagem')), 45000)
   );
 
   await Promise.race([messagePromise, timeoutPromise]);

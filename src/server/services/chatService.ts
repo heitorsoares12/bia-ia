@@ -12,18 +12,17 @@ interface VisitorData {
 }
 
 export async function startConversation(data: VisitorData) {
-  let visitor = await prisma.visitor.findUnique({ where: { email: data.email } });
-  if (!visitor) {
-    visitor = await prisma.visitor.create({
-      data: data as Prisma.VisitorUncheckedCreateInput,
-    });
-  }
+  // Sempre cria um novo visitor, permitindo múltiplos usuários com mesmo email
+  const visitor = await prisma.visitor.create({
+    data: data as Prisma.VisitorUncheckedCreateInput,
+  });
 
   const conversation = await prisma.conversation.create({
     data: {
       visitorId: visitor.id,
       status: 'OPEN',
       startedAt: new Date(),
+      lastActivity: new Date(),
     },
   });
 
@@ -35,6 +34,12 @@ export async function sendMessage(conversationId: string, content: string, forma
   if (!conversation || conversation.status !== 'OPEN') {
     throw new Error('Conversa não encontrada ou encerrada');
   }
+
+  // Atualiza lastActivity
+  await prisma.conversation.update({
+    where: { id: conversationId },
+    data: { lastActivity: new Date() },
+  });
 
   await prisma.message.create({
     data: {
@@ -72,6 +77,12 @@ export async function streamAssistantResponse(conversationId: string, content: s
   if (!conversation || conversation.status !== 'OPEN') {
     throw new Error('Conversa não encontrada ou encerrada');
   }
+
+  // Atualiza lastActivity
+  await prisma.conversation.update({
+    where: { id: conversationId },
+    data: { lastActivity: new Date() },
+  });
 
   await prisma.message.create({
     data: {

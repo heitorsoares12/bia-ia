@@ -8,6 +8,9 @@ import Markdown from "react-markdown";
 import sanitize from "sanitize-html";
 import { ChatMessage } from "@/shared/types/chat";
 import { quickQuestions, QuickQuestion } from "@/data/quickQuestions";
+import { useHeartbeat } from "@/client/hooks/useHeartbeat";
+import { useConnectionRecovery } from "@/client/hooks/useConnectionRecovery";
+import { useSessionContext } from "../SessionProvider";
 
 interface VisitorData {
   nome?: string;
@@ -95,6 +98,22 @@ const Chat: React.FC = () => {
   const [toEndVisible, setToEndVisible] = useState(false);
   const hideTimerRef = useRef<number | null>(null);
   const prevMessagesLengthRef = useRef(0);
+  const { session, saveSession, clearSession } = useSessionContext();
+
+  // Sistema de heartbeat para manter conexão ativa
+  const { updateActivity } = useHeartbeat({
+    interval: 5 * 60 * 1000, // 5 minutos em produção
+    enabled: !!conversationId && !conversationEnded,
+    conversationId,
+  });
+
+  // Sistema de recuperação de conexão
+  const { isReconnecting, connectionError, handleConnectionError, resetConnection } = useConnectionRecovery({
+    conversationId,
+    onReconnect: () => {
+      console.log('Conexão restabelecida');
+    },
+  });
 
   const scrollToBottom = useCallback(
     (behavior: ScrollBehavior = "auto") => {
@@ -283,6 +302,9 @@ const Chat: React.FC = () => {
         }
       } catch (err) {
         console.error(err);
+        if (err instanceof Error) {
+          handleConnectionError(err);
+        }
       } finally {
         setIsLoading(false);
       }
@@ -347,12 +369,32 @@ const Chat: React.FC = () => {
         const id = json.data.conversationId as string;
         setConversationId(id);
         localStorage.setItem("conversationId", id);
+
+        // Verifica se deve salvar sessão persistente
+        const pendingSession = localStorage.getItem("pendingSession");
+        if (pendingSession) {
+          try {
+            const sessionData = JSON.parse(pendingSession);
+            if (sessionData.manterLogado) {
+              saveSession({
+                visitorId: sessionData.visitorId,
+                conversationId: id,
+                visitorData: sessionData.visitorData,
+                manterLogado: true,
+              });
+            }
+            localStorage.removeItem("pendingSession");
+          } catch (error) {
+            console.error("Erro ao salvar sessão:", error);
+          }
+        }
+
         greetVisitor(visitor, id);
       } catch (err) {
         console.error(err);
       }
     },
-    [greetVisitor]
+    [greetVisitor, saveSession]
   );
 
   const fetchHistory = useCallback(
@@ -405,14 +447,14 @@ const Chat: React.FC = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ conversationId }),
       });
-      // Limpa os dados da sessão
-      localStorage.removeItem("conversationId");
-      localStorage.removeItem("chatMessages");
-      localStorage.removeItem("visitorData");
+
+      // Limpa todos os dados da sessão
+      clearSession();
       setConversationId(null);
       setMessages([]);
       setConversationEnded(true);
       setShowEndDialog(false);
+
       // Redireciona para a tela inicial
       router.push("/");
     } catch (err) {
@@ -429,14 +471,14 @@ const Chat: React.FC = () => {
     const storedVisitor = localStorage.getItem("visitorData");
     const storedConv = localStorage.getItem("conversationId");
     if (storedVisitor) {
-      const visitor = JSON.parse(storedVisitor) as VisitorData;
-      visitorDataRef.current = visitor;
-      if (storedConv) {
-        setConversationId(storedConv);
-        fetchHistory(storedConv);
-      } else {
-        startConversation(visitor);
-      }
+        const visitor = JSON.parse(storedVisitor) as VisitorData;
+        visitorDataRef.current = visitor;
+        if (storedConv) {
+          setConversationId(storedConv);
+          fetchHistory(storedConv);
+        } else {
+          startConversation(visitor);
+        }
     }
   }, [fetchHistory, startConversation]);
 
@@ -452,6 +494,7 @@ const Chat: React.FC = () => {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!userInput.trim() || !conversationId || isLoading) return;
+    updateActivity(); // Registra atividade do usuário
     debouncedSend(userInput);
     setUserInput("");
   };
@@ -507,6 +550,22 @@ const Chat: React.FC = () => {
             restabelecida.
           </div>
         )}
+        {isReconnecting && (
+          <div className={styles.reconnectingBanner}>
+            Reconectando... Tentando restabelecer conexão.
+          </div>
+        )}
+        {connectionError && !isReconnecting && (
+          <div className={styles.errorBanner}>
+            Erro de conexão: {connectionError}
+            <button
+              onClick={resetConnection}
+              className={styles.retryButton}
+            >
+              Tentar novamente
+            </button>
+          </div>
+        )}
         <div className={styles.chatHeader}>
           <div className={styles.headerLeft}>
             <div className={styles.avatar}>B</div>
@@ -517,10 +576,11 @@ const Chat: React.FC = () => {
           </div>
           <div className={styles.headerRight}>
             <button
-              onClick={requestEndConversation}
-              className={styles.endChatButton}
+              onClick={session ? clearSession : requestEndConversation}
+              className={session ? styles.logoutButton : styles.endChatButton}
+              title={session ? "Sair da sessão" : "Encerrar conversa"}
             >
-              Encerrar
+              {session ? 'Sair' : 'Encerrar'}
             </button>
           </div>
         </div>

@@ -21,7 +21,7 @@ enum MessageRole {
 model Visitor {
   id          String         @id @default(uuid())
   nome        String
-  email       String         @unique
+  email       String
   cnpj        String?
   cargo       String?
   areaAtuacao String?
@@ -32,19 +32,21 @@ model Visitor {
 }
 
 model Conversation {
-  id         String             @id @default(uuid())
-  visitorId  String
-  threadId   String?
-  status     ConversationStatus @default(OPEN)
-  startedAt  DateTime
-  endedAt    DateTime?
-  createdAt  DateTime           @default(now())
-  updatedAt  DateTime           @updatedAt
-  visitor    Visitor            @relation(fields: [visitorId], references: [id])
-  messages   Message[]
+  id           String             @id @default(uuid())
+  visitorId    String
+  threadId     String?
+  status       ConversationStatus @default(OPEN)
+  startedAt    DateTime
+  endedAt      DateTime?
+  lastActivity DateTime?          @default(now())
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  visitor      Visitor            @relation(fields: [visitorId], references: [id])
+  messages     Message[]
 
   @@index([visitorId])
   @@index([createdAt])
+  @@index([lastActivity])
 }
 
 model Message {
@@ -62,7 +64,7 @@ model Message {
 model User {
   id          Int      @id @default(autoincrement())
   nome        String
-  email       String   @unique
+  email       String
   cnpj        String
   empresa     String?
   cargo       String

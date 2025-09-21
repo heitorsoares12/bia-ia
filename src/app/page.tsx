@@ -22,7 +22,7 @@ const Home = () => {
       <div className={styles.content}>
         <div className={styles.avatarContainer}>
           <Image
-            src="/assets/Bia.png"
+            src="/assets/LogoBia.png"
             alt="Assistente Virtual Bia"
             width={220}
             height={220}

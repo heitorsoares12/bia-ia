@@ -50,16 +50,7 @@ export async function GET(req: Request) {
   const email = searchParams.get('email');
 
   if (email) {
-    try {
-      const visitor = await prisma.visitor.findUnique({
-        where: { email },
-      });
-      return NextResponse.json({ exists: !!visitor });
-    } catch (error) {
-      return NextResponse.json({ exists: false });
-    } finally {
-      await prisma.$disconnect();
-    }
+    return NextResponse.json({ exists: false });
   }
 
   const visitorId = searchParams.get('id');

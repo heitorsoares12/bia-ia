@@ -12,6 +12,7 @@ import { UserIcon, BuildingIcon } from "./icons";
 import { FormField } from "./FormField";
 import { FormSection } from "./FormSection";
 import { useCnpjApi } from "@/client/hooks/useCnpjApi";
+import { useSessionContext } from "../SessionProvider";
 
 const cargoOptions = [
   { value: "diretorProprietario", label: "Diretor/Proprietário" },
@@ -47,17 +48,7 @@ const interesseOptions = [
 const formSchema = z
   .object({
     nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-    email: z.string().email("E-mail inválido").refine(async (email) => {
-        if (!email) return false;
-        try {
-            const response = await fetch(`/api/visitor?email=${email}`);
-            if (!response.ok) return false;
-            const data = await response.json();
-            return !data.exists;
-        } catch (error) {
-            return false;
-        }
-    }, "Este e-mail já está cadastrado."),
+    email: z.string().email("E-mail inválido"),
     cnpj: z
       .string()
       .optional()
@@ -89,6 +80,7 @@ const formSchema = z
         message: "Selecione um interesse válido",
       }),
     interesseOutro: z.string().optional(),
+    manterLogado: z.boolean().optional(),
     lgpdConsent: z.boolean().refine((val) => val, {
       message: "Você deve consentir com a política de privacidade",
     }),
@@ -139,6 +131,7 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
     mode: "onBlur",
     defaultValues: {
       lgpdConsent: false,
+      manterLogado: false,
       nome: "",
       email: "",
       cnpj: "",
@@ -208,7 +201,7 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...visitorData,
+        ...visitorData,
           areaAtuacao: visitorData.area, // Mantém o campo esperado pela API
         }),
       });
@@ -218,6 +211,18 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
 
       // Salva os dados do novo visitante
       localStorage.setItem("visitorData", JSON.stringify(visitorData));
+
+      // Se "Manter-me logado" estiver marcado, prepara para salvar a sessão
+      if (data.manterLogado) {
+        // Salva temporariamente para usar quando a conversa for criada
+        const pendingData = {
+          visitorId: result.visitorId,
+          visitorData,
+          manterLogado: true,
+        };
+        localStorage.setItem("pendingSession", JSON.stringify(pendingData));
+      }
+
       onSuccess?.(result.visitorId);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erro ao enviar dados";
@@ -270,6 +275,25 @@ export const Form: React.FC<FormProps> = ({ onSuccess }) => {
               required
               placeholder="seu.email@exemplo.com"
             />
+          </div>
+          
+          {/* Checkbox Manter Logado */}
+          <div className={styles.manterLogadoContainer}>
+            <div className={styles.checkboxGroup}>
+              <input
+                type="checkbox"
+                id="manterLogado"
+                {...register("manterLogado")}
+                className={styles.checkbox}
+                aria-describedby="manterLogado-description"
+              />
+              <label htmlFor="manterLogado" className={styles.manterLogadoLabel}>
+                Manter-me logado
+              </label>
+            </div>
+            <p id="manterLogado-description" className={styles.manterLogadoDescription}>
+              Sua sessão será mantida ativa para facilitar futuras interações
+            </p>
           </div>
         </FormSection>
 

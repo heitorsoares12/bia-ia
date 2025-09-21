@@ -1,5 +1,7 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { SessionProvider } from "@/client/components/SessionProvider";
+
 export const assistantId = "asst_YjQgLU3twvivUChLp0SJ6Fbu";
 const inter = Inter({ subsets: ["latin"] });
 
@@ -14,9 +16,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="pt-BR">
       <body className={inter.className} suppressHydrationWarning>
-        {children}
-        {/* Você pode adicionar o logo da sua empresa aqui */}
-        {/* <img className="logo" src="/logo-empresa.svg" alt="Logo da Empresa" /> */}
+        <SessionProvider>
+          {children}
+        </SessionProvider>
       </body>
     </html>
   );
