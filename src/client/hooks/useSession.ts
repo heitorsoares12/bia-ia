@@ -78,7 +78,7 @@ export function useSession() {
             localStorage.removeItem(SESSION_STORAGE_KEY);
           }
         }
-      } catch (error) {
+      } catch {
         localStorage.removeItem(SESSION_STORAGE_KEY);
       } finally {
         setIsLoading(false);

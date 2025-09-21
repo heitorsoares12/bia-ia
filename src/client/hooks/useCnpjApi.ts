@@ -47,7 +47,7 @@ export const useCnpjApi = <T extends FieldValues>(
           fetchBrasilApi(),
           fetchCnpjWs(),
         ]);
-        setValue('empresa' as Path<T>, nomeFantasia as any, { shouldValidate: true });
+        setValue('empresa' as Path<T>, nomeFantasia as T[Path<T>], { shouldValidate: true });
         trigger('empresa' as Path<T>);
         toast.success("Dados da empresa carregados!");
       } catch (err) {

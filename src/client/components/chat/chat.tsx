@@ -295,7 +295,7 @@ const Chat: React.FC = () => {
                     return prev;
                   });
                 }
-              } catch (e) {
+              } catch {
               }
             }
           }

@@ -69,7 +69,7 @@ export function getAssistantResponseStream(threadId: string, content: string) {
                 conversationId: conversation.id,
                 role: 'ASSISTANT',
                 content: assistantResponse,
-              } as any,
+              },
             });
           }
         } catch (err) {

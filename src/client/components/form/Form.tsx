@@ -12,7 +12,6 @@ import { UserIcon, BuildingIcon } from "./icons";
 import { FormField } from "./FormField";
 import { FormSection } from "./FormSection";
 import { useCnpjApi } from "@/client/hooks/useCnpjApi";
-import { useSessionContext } from "../SessionProvider";
 
 const cargoOptions = [
   { value: "diretorProprietario", label: "Diretor/Proprietário" },
