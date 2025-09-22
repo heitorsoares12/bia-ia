@@ -20,16 +20,14 @@ const Home = () => {
       </header>
 
       <div className={styles.content}>
-        <div className={styles.avatarContainer}>
-          <Image
-            src="/assets/LogoBia.png"
+        <Image
+            src="/assets/logoTelaInicial.png"
             alt="Assistente Virtual Bia"
-            width={220}
+            width={500}
             height={220}
             className={styles.avatar}
             priority
           />
-        </div>
         
         <p className={styles.welcomeText}>
           Olá, eu sou a B.i.a, a Inteligência Artificial da Brancotex,

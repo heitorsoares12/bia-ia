@@ -41,7 +41,7 @@ export default function FormPage() {
             <Image
               src="/assets/LogoBia.png"
               alt="Assistente Virtual Bia"
-              width={220}
+              width={320}
               height={320}
               className={styles.avatar}
               priority

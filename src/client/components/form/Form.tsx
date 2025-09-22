@@ -28,10 +28,6 @@ const areaOptions = [
   { value: "fabricanteTintas", label: "Fabricante de tintas" },
   { value: "distribuidorRevenda", label: "Distribuidor/Revenda" },
   { value: "construcaoCivil", label: "Construção Civil" },
-  { value: "industriaMoveleira", label: "Indústria Moveleira" },
-  { value: "automotivo", label: "Automotivo" },
-  { value: "naval", label: "Naval/Marítimo" },
-  { value: "arquiteturaDecoracao", label: "Arquitetura/Decoração" },
   { value: "outros", label: "Outros" },
 ] as const;
 

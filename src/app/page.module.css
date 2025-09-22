@@ -116,33 +116,20 @@
   background-color: rgba(255, 255, 255, 0.7);
 }
 
-.avatarContainer {
-  margin-bottom: 25px;
-  animation: float 3s ease-in-out infinite;
-  position: relative;
-}
 
 .avatar {
-  border-radius: 50%;
-  background: white;
-  box-shadow: 
-    0 8px 25px rgba(0, 82, 155, 0.2),
-    0 0 0 4px #00529B,
-    0 0 0 8px rgba(0, 82, 155, 0.1);
-  transition: transform 0.3s ease;
-  width: clamp(180px, 40vw, 220px);
-  height: clamp(180px, 40vw, 220px);
-  object-fit: contain;
-}
-
-.avatarContainer:hover .avatar {
-  transform: scale(1.05);
+  margin-bottom: 25px;
 }
 
 @keyframes float {
   0% { transform: translateY(0px); }
   50% { transform: translateY(-12px); }
   100% { transform: translateY(0px); }
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* Tablet Optimization */
