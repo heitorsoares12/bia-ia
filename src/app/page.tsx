@@ -37,7 +37,7 @@ const Home = () => {
         <button
           className={styles.chatButton}
           onClick={() => router.push("/formulario")}
-          aria-label="Iniciar conversa com a assistente inteligente"
+          aria-label="Iniciar conversa com assistente inteligente"
         >
           <svg 
             className={styles.chatIcon} 
