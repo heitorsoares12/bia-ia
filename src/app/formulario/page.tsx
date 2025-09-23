@@ -40,7 +40,7 @@ export default function FormPage() {
           <div className={styles.assistantContent}>
             <Image
               src="/assets/LogoBia.png"
-              alt="Assistente Virtual Bia"
+              alt="Assistente Inteligente Bia"
               width={320}
               height={320}
               className={styles.avatar}

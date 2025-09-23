@@ -571,7 +571,7 @@ const Chat: React.FC = () => {
             <div className={styles.avatar}>B</div>
             <div className={styles.headerInfo}>
               <h4>Chat com BIA</h4>
-              <p>Assistente Virtual Brancotex</p>
+              <p>Assistente Inteligente Brancotex</p>
             </div>
           </div>
           <div className={styles.headerRight}>

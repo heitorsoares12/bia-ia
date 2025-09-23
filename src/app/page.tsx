@@ -16,13 +16,13 @@ const Home = () => {
           alt="Brancotex" 
           className={styles.logo}
         />
-        <h1 className={styles.title}>Assistente Virtual Bia</h1>
+        <h1 className={styles.title}>Assistente Inteligente Bia</h1>
       </header>
 
       <div className={styles.content}>
         <Image
             src="/assets/logoTelaInicial.png"
-            alt="Assistente Virtual Bia"
+            alt="Assistente Inteligente Bia"
             width={500}
             height={220}
             className={styles.avatar}
@@ -37,7 +37,7 @@ const Home = () => {
         <button
           className={styles.chatButton}
           onClick={() => router.push("/formulario")}
-          aria-label="Iniciar conversa com a assistente virtual"
+          aria-label="Iniciar conversa com a assistente inteligente"
         >
           <svg 
             className={styles.chatIcon} 
