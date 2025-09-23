@@ -3,7 +3,7 @@
   flex-direction: column;
   min-height: 100vh;
   background: linear-gradient(to bottom, #FFFFFF 0%, #F0F2F5 100%);
-  overflow: hidden;
+  overflow-y: auto;
   position: relative;
 }
 
