@@ -409,7 +409,7 @@ const Chat: React.FC = () => {
             (m: { role: string; content: string }, index: number) =>
               index !== 0 ||
               m.role !== "USER" ||
-              !m.content.includes("Cumprimente-o pelo nome")
+              (!m.content.includes("Cumprimente-o pelo nome") && !m.content.includes("Prompt para a IA gerar a mensagem inicial do chat"))
           )
           .map(
             (m: {
